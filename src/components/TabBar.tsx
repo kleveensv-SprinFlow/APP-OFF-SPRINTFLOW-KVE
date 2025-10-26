@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Dumbbell, Calendar, User, Users, MessageSquare, BarChart3 } from 'lucide-react';
+import { Home, Dumbbell, Calendar, Users, MessageSquare, BarChart3, Lightbulb } from 'lucide-react';
 import { View, Role } from '../../types';
 
 interface TabBarProps {
@@ -13,7 +13,7 @@ const TabBar: React.FC<TabBarProps> = ({ currentView, onViewChange, userRole }) 
     { view: 'dashboard' as View, icon: Home, label: 'Accueil' },
     { view: 'workouts' as View, icon: Dumbbell, label: 'Séances' },
     { view: 'planning' as View, icon: Calendar, label: 'Planning' },
-    { view: 'profile' as View, icon: User, label: 'Profil' },
+    { view: 'ai' as View, icon: Lightbulb, label: 'Conseil' },
   ];
 
   const coachNavItems = [
