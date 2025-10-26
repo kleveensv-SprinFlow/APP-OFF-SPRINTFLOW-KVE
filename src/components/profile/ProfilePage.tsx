@@ -211,8 +211,7 @@ export function ProfilePage() {
               <button onClick={() => setShowEditAthleticModal(true)} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm"><Edit className="w-4 h-4" />Mettre à jour</button>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div><p className="text-sm text-gray-600 dark:text-gray-400">Sport</p><p className="text-lg font-medium text-gray-900 dark:text-white">{formatSport(profile.sport)}</p></div>
-              <div className="col-span-2"><p className="text-sm text-gray-600 dark:text-gray-400">Disciplines de prédilection</p><p className="text-lg font-medium text-gray-900 dark:text-white">{formatDisciplines(profile.favorite_disciplines)}</p></div>
+              <div className="col-span-2"><p className="text-sm text-gray-600 dark:text-gray-400">Discipline principale</p><p className="text-lg font-medium text-gray-900 dark:text-white">{profile.discipline || 'Non renseigné'}</p></div>
               <div><p className="text-sm text-gray-600 dark:text-gray-400">Date de naissance</p><p className="text-lg font-medium text-gray-900 dark:text-white">{formatDate(profile.date_de_naissance)}</p></div>
               <div><p className="text-sm text-gray-600 dark:text-gray-400">Sexe</p><p className="text-lg font-medium text-gray-900 dark:text-white">{profile.sexe === 'homme' ? 'Homme' : profile.sexe === 'femme' ? 'Femme' : 'Non spécifié'}</p></div>
               <div><p className="text-sm text-gray-600 dark:text-gray-400">Taille</p><p className="text-lg font-medium text-gray-900 dark:text-white">{profile.taille_cm ? `${profile.taille_cm} cm` : 'Non renseigné'}</p></div>
