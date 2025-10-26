@@ -40,30 +40,69 @@ export function ProfilePage() {
   const loadProfile = async () => {
     setIsLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not found");
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+      if (authError) {
+        console.error('Erreur authentification:', authError);
+        throw authError;
+      }
+
+      if (!user) {
+        console.error('Aucun utilisateur connecté');
+        throw new Error("User not authenticated");
+      }
+
+      console.log('User ID:', user.id);
 
       const { data, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, full_name, date_de_naissance, taille_cm, taille_derniere_modif, photo_url, avatar_url, sexe, sport, discipline, favorite_disciplines')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        console.error('Erreur Supabase:', error);
+        console.error('Erreur requête profiles:', error);
         throw error;
       }
 
-      setProfile({
-        ...data,
-        first_name: data.first_name || user.user_metadata?.first_name || '',
-        last_name: data.last_name || user.user_metadata?.last_name || '',
-        full_name: data.full_name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || '',
-        email: user.email || '',
-        avatar_url: data.avatar_url || data.photo_url || null
-      });
-    } catch (error) {
-      console.error('Erreur chargement profil:', error);
+      if (!data) {
+        console.log('Profil non trouvé, création en cours...');
+        const newProfile = {
+          id: user.id,
+          first_name: user.user_metadata?.first_name || '',
+          last_name: user.user_metadata?.last_name || '',
+          full_name: user.user_metadata?.full_name || '',
+        };
+
+        const { data: createdProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert(newProfile)
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Erreur création profil:', createError);
+          throw createError;
+        }
+
+        setProfile({
+          ...createdProfile,
+          email: user.email || '',
+          avatar_url: createdProfile.avatar_url || createdProfile.photo_url || null
+        });
+      } else {
+        console.log('Profil trouvé:', data);
+        setProfile({
+          ...data,
+          first_name: data.first_name || user.user_metadata?.first_name || '',
+          last_name: data.last_name || user.user_metadata?.last_name || '',
+          full_name: data.full_name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || '',
+          email: user.email || '',
+          avatar_url: data.avatar_url || data.photo_url || null
+        });
+      }
+    } catch (error: any) {
+      console.error('Erreur chargement profil:', error.message || error);
     } finally {
       setIsLoading(false);
     }
