@@ -8,8 +8,9 @@ import { DeleteAccountModal } from './DeleteAccountModal';
 
 interface ProfileData {
   id: string;
-  first_name: string;
-  last_name: string;
+  first_name: string | null;
+  last_name: string | null;
+  full_name: string | null;
   email: string;
   date_de_naissance: string | null;
   taille_cm: number | null;
@@ -17,7 +18,9 @@ interface ProfileData {
   avatar_url: string | null;
   photo_url: string | null;
   sexe: 'male' | 'female' | null;
+  sport: string | null;
   discipline: string | null;
+  favorite_disciplines: any;
   tour_cou_cm: number | null;
   tour_taille_cm: number | null;
   tour_hanches_cm: number | null;
@@ -45,7 +48,7 @@ export function ProfilePage() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, date_de_naissance, taille_cm, taille_derniere_modif, photo_url, sexe, discipline, tour_cou_cm, tour_taille_cm, tour_hanches_cm')
+        .select('id, first_name, last_name, full_name, date_de_naissance, taille_cm, taille_derniere_modif, photo_url, avatar_url, sexe, sport, discipline, favorite_disciplines, tour_cou_cm, tour_taille_cm, tour_hanches_cm')
         .eq('id', user.id)
         .single();
 
@@ -58,8 +61,9 @@ export function ProfilePage() {
         ...data,
         first_name: data.first_name || user.user_metadata?.first_name || '',
         last_name: data.last_name || user.user_metadata?.last_name || '',
+        full_name: data.full_name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || '',
         email: user.email || '',
-        avatar_url: data.photo_url || null
+        avatar_url: data.avatar_url || data.photo_url || null
       });
     } catch (error) {
       console.error('Erreur chargement profil:', error);
@@ -92,18 +96,28 @@ export function ProfilePage() {
     }
   };
   
-  const getInitials = (firstName: string, lastName: string) => {
+  const getInitials = (profile: ProfileData) => {
+    if (profile.full_name) {
+      return profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    }
     const initials = [];
-    if (firstName) initials.push(firstName[0]);
-    if (lastName) initials.push(lastName[0]);
+    if (profile.first_name) initials.push(profile.first_name[0]);
+    if (profile.last_name) initials.push(profile.last_name[0]);
     return initials.length > 0 ? initials.join('').toUpperCase() : 'U';
   };
 
-  const getFullName = (firstName: string, lastName: string) => {
-    return `${firstName || ''} ${lastName || ''}`.trim() || 'Utilisateur';
+  const getFullName = (profile: ProfileData) => {
+    if (profile.full_name) return profile.full_name;
+    return `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Utilisateur';
   };
   const formatDate = (date: string | null) => date ? new Date(date).toLocaleDateString('fr-FR') : 'Non renseigné';
-  const formatDiscipline = (d: string | null) => d ? d.charAt(0).toUpperCase() + d.slice(1) : 'Non spécifiée';
+  const formatSport = (s: string | null) => s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Non spécifié';
+  const formatDisciplines = (disciplines: any) => {
+    if (!disciplines) return 'Non spécifiées';
+    if (Array.isArray(disciplines)) return disciplines.join(', ') || 'Non spécifiées';
+    if (typeof disciplines === 'object') return JSON.stringify(disciplines);
+    return String(disciplines);
+  };
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen"><Loader2 className="w-12 h-12 animate-spin text-blue-600" /></div>;
@@ -118,7 +132,7 @@ export function ProfilePage() {
         <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
           <div className="relative">
             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg overflow-hidden">
-              {profile.avatar_url ? <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" /> : getInitials(profile.first_name, profile.last_name)}
+              {profile.avatar_url ? <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" /> : getInitials(profile)}
             </div>
             <button onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto} className="absolute bottom-0 right-0 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-colors disabled:opacity-50">
               {uploadingPhoto ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
@@ -126,7 +140,7 @@ export function ProfilePage() {
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{getFullName(profile.first_name, profile.last_name)}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{getFullName(profile)}</h1>
             <p className="text-gray-600 dark:text-gray-400 flex items-center gap-2"><Mail className="w-4 h-4" />{profile.email}</p>
           </div>
         </div>
@@ -138,7 +152,7 @@ export function ProfilePage() {
               <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2"><User className="w-5 h-5" />Informations Personnelles</h2>
               <button onClick={() => setShowEditInfoModal(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"><Edit className="w-4 h-4" />Modifier</button>
             </div>
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Prénom</p>
                 <p className="text-lg font-medium text-gray-900 dark:text-white">{profile.first_name || 'Non renseigné'}</p>
@@ -146,6 +160,10 @@ export function ProfilePage() {
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Nom</p>
                 <p className="text-lg font-medium text-gray-900 dark:text-white">{profile.last_name || 'Non renseigné'}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Email</p>
+                <p className="text-lg font-medium text-gray-900 dark:text-white">{profile.email}</p>
               </div>
             </div>
           </div>
@@ -157,12 +175,11 @@ export function ProfilePage() {
               <button onClick={() => setShowEditAthleticModal(true)} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm"><Edit className="w-4 h-4" />Mettre à jour</button>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div><p className="text-sm text-gray-600 dark:text-gray-400">Discipline</p><p className="text-lg font-medium text-gray-900 dark:text-white">{formatDiscipline(profile.discipline)}</p></div>
+              <div><p className="text-sm text-gray-600 dark:text-gray-400">Sport</p><p className="text-lg font-medium text-gray-900 dark:text-white">{formatSport(profile.sport)}</p></div>
+              <div className="col-span-2"><p className="text-sm text-gray-600 dark:text-gray-400">Disciplines de prédilection</p><p className="text-lg font-medium text-gray-900 dark:text-white">{formatDisciplines(profile.favorite_disciplines)}</p></div>
               <div><p className="text-sm text-gray-600 dark:text-gray-400">Date de naissance</p><p className="text-lg font-medium text-gray-900 dark:text-white">{formatDate(profile.date_de_naissance)}</p></div>
-              <div><p className="text-sm text-gray-600 dark:text-gray-400">Taille</p><p className="text-lg font-medium text-gray-900 dark:text-white">{profile.taille_cm ? `${profile.taille_cm} cm` : 'N/A'}</p></div>
-              <div><p className="text-sm text-gray-600 dark:text-gray-400">Tour de cou</p><p className="text-lg font-medium text-gray-900 dark:text-white">{profile.tour_cou_cm ? `${profile.tour_cou_cm} cm` : 'N/A'}</p></div>
-              <div><p className="text-sm text-gray-600 dark:text-gray-400">Tour de taille</p><p className="text-lg font-medium text-gray-900 dark:text-white">{profile.tour_taille_cm ? `${profile.tour_taille_cm} cm` : 'N/A'}</p></div>
-              {profile.sexe === 'female' && <div><p className="text-sm text-gray-600 dark:text-gray-400">Tour de hanches</p><p className="text-lg font-medium text-gray-900 dark:text-white">{profile.tour_hanches_cm ? `${profile.tour_hanches_cm} cm` : 'N/A'}</p></div>}
+              <div><p className="text-sm text-gray-600 dark:text-gray-400">Sexe</p><p className="text-lg font-medium text-gray-900 dark:text-white">{profile.sexe === 'male' ? 'Homme' : profile.sexe === 'female' ? 'Femme' : 'Non spécifié'}</p></div>
+              <div><p className="text-sm text-gray-600 dark:text-gray-400">Taille</p><p className="text-lg font-medium text-gray-900 dark:text-white">{profile.taille_cm ? `${profile.taille_cm} cm` : 'Non renseigné'}</p></div>
             </div>
           </div>
 
@@ -178,7 +195,7 @@ export function ProfilePage() {
         </div>
       </div>
 
-      {showEditInfoModal && <EditInfoModal currentFirstName={profile.first_name} currentLastName={profile.last_name} onClose={() => setShowEditInfoModal(false)} onSaved={() => { setShowEditInfoModal(false); loadProfile(); }} />}
+      {showEditInfoModal && <EditInfoModal currentFirstName={profile.first_name || ''} currentLastName={profile.last_name || ''} onClose={() => setShowEditInfoModal(false)} onSaved={() => { setShowEditInfoModal(false); loadProfile(); }} />}
       {showEditAthleticModal && <EditAthleticDataModal currentProfileData={profile} onClose={() => setShowEditAthleticModal(false)} onSaved={() => { setShowEditAthleticModal(false); loadProfile(); }} />}
       {showChangePasswordModal && <ChangePasswordModal onClose={() => setShowChangePasswordModal(false)} />}
       {showDeleteAccountModal && <DeleteAccountModal onClose={() => setShowDeleteAccountModal(false)} />}
