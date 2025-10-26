@@ -124,12 +124,13 @@ export function useAuth() {
 
   const signUp = async (email: string, password: string, role: 'athlete' | 'coach' = 'athlete', firstName?: string, lastName?: string) => {
     const actualRole = role;
-    
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/auth/confirm`,
           data: {
             role: actualRole,
             first_name: firstName || '',
@@ -145,6 +146,26 @@ export function useAuth() {
       return data;
     } catch (error) {
       throw error;
+    }
+  };
+
+  const resendConfirmationEmail = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/confirm`
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, message: 'Email de confirmation renvoyé avec succès' };
+    } catch (error: any) {
+      throw new Error(error.message || 'Erreur lors du renvoi de l\'email');
     }
   };
 
@@ -193,7 +214,8 @@ export function useAuth() {
     error,
     signIn,
     signUp,
-    signOut
+    signOut,
+    resendConfirmationEmail
   };
 }
 
