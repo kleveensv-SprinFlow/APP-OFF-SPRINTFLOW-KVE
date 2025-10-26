@@ -1,8 +1,8 @@
 import React from 'react';
-import { Dumbbell, Target, BarChart3 } from 'lucide-react';
+import { Dumbbell, Target, Users } from 'lucide-react';
 
 interface QuickActionsProps {
-  onViewChange: (view: 'workouts' | 'records' | 'bodycomp') => void;
+  onViewChange: (view: 'workouts' | 'records' | 'groups') => void;
 }
 
 export function QuickActions({ onViewChange }: QuickActionsProps) {
@@ -27,12 +27,12 @@ export function QuickActions({ onViewChange }: QuickActionsProps) {
       </button>
       
       <button
-        onClick={() => onViewChange('bodycomp')}
+        onClick={() => onViewChange('groups')}
         className="bg-green-600 hover:bg-green-700 p-6 rounded-lg transition-all duration-200 text-white text-left"
       >
-        <BarChart3 className="h-8 w-8 mb-2" />
-        <h3 className="text-lg font-semibold">Composition corporelle</h3>
-        <p className="text-white/80 text-sm">Suivre votre évolution</p>
+        <Users className="h-8 w-8 mb-2" />
+        <h3 className="text-lg font-semibold">Groupe</h3>
+        <p className="text-white/80 text-sm">Voir le chat et les membres</p>
       </button>
     </div>
   );
