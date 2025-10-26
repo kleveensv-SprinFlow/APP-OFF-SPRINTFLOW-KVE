@@ -14,7 +14,9 @@ export default function Auth() {
     password: '',
     firstName: '',
     lastName: '',
-    role: 'athlete' as 'athlete' | 'coach'
+    role: 'athlete' as 'athlete' | 'coach',
+    discipline: '',
+    sexe: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,6 +42,8 @@ export default function Auth() {
               role: formData.role,
               first_name: formData.firstName,
               last_name: formData.lastName,
+              discipline: formData.discipline,
+              sexe: formData.sexe,
             }
           }
         });
@@ -55,6 +59,8 @@ export default function Auth() {
               role: formData.role,
               first_name: formData.firstName,
               last_name: formData.lastName,
+              discipline: formData.discipline,
+              sexe: formData.sexe,
               created_at: new Date().toISOString()
             });
 
@@ -178,9 +184,6 @@ export default function Auth() {
                 Un lien de réinitialisation a été envoyé à <strong>{resetEmail}</strong>.
                 Vérifiez votre boîte mail et suivez les instructions.
               </p>
-              <p className="text-sm text-gray-500 mb-6">
-                Le lien expire dans 1 heure. Si vous ne recevez pas l'email, vérifiez vos spams.
-              </p>
               <button
                 onClick={resetForgotPasswordState}
                 className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
@@ -256,6 +259,38 @@ export default function Auth() {
                 >
                   <option value="athlete">Athlète</option>
                   <option value="coach">Coach</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Discipline
+                </label>
+                <select
+                  name="discipline"
+                  value={formData.discipline}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="">Non spécifiée</option>
+                  <option value="sprint">Sprint</option>
+                  <option value="sauts">Sauts</option>
+                  <option value="lancers">Lancers</option>
+                  <option value="demi-fond">Demi-fond / Fond</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Sexe
+                </label>
+                <select
+                  name="sexe"
+                  value={formData.sexe}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="">Non spécifié</option>
+                  <option value="male">Homme</option>
+                  <option value="female">Femme</option>
                 </select>
               </div>
             </>
