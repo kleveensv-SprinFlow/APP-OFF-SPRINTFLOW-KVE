@@ -9,9 +9,6 @@ interface EditAthleticDataModalProps {
     taille_derniere_modif: string | null;
     sexe: 'male' | 'female' | null;
     discipline: string | null;
-    tour_cou_cm: number | null;
-    tour_taille_cm: number | null;
-    tour_hanches_cm: number | null;
   };
   onClose: () => void;
   onSaved: () => void;
@@ -23,9 +20,6 @@ export function EditAthleticDataModal({ currentProfileData, onClose, onSaved }: 
     taille: currentProfileData.taille_cm?.toString() || '',
     sexe: currentProfileData.sexe || '',
     discipline: currentProfileData.discipline || '',
-    tourCou: currentProfileData.tour_cou_cm?.toString() || '',
-    tourTaille: currentProfileData.tour_taille_cm?.toString() || '',
-    tourHanches: currentProfileData.tour_hanches_cm?.toString() || '',
   });
   
   const [isSaving, setIsSaving] = useState(false);
@@ -64,9 +58,6 @@ export function EditAthleticDataModal({ currentProfileData, onClose, onSaved }: 
         date_de_naissance: formData.dateNaissance || null,
         sexe: formData.sexe || null,
         discipline: formData.discipline || null,
-        tour_cou_cm: parseFloat(formData.tourCou) || null,
-        tour_taille_cm: parseFloat(formData.tourTaille) || null,
-        tour_hanches_cm: formData.sexe === 'female' ? parseFloat(formData.tourHanches) || null : null,
       };
 
       if (formData.taille && !isTailleBlocked) {
@@ -133,26 +124,6 @@ export function EditAthleticDataModal({ currentProfileData, onClose, onSaved }: 
               </div>
             )}
           </div>
-          
-          <p className="text-sm text-gray-600 dark:text-gray-400 pt-2">Les mensurations suivantes sont optionnelles mais permettent d'obtenir un score de performance beaucoup plus précis.</p>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tour de cou (cm)</label>
-              <input type="number" name="tourCou" value={formData.tourCou} onChange={handleInputChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="38" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tour de taille (cm)</label>
-              <input type="number" name="tourTaille" value={formData.tourTaille} onChange={handleInputChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="80" />
-            </div>
-          </div>
-          
-          {formData.sexe === 'female' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tour de hanches (cm)</label>
-              <input type="number" name="tourHanches" value={formData.tourHanches} onChange={handleInputChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="95" />
-            </div>
-          )}
 
           {error && <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3"><p className="text-sm text-red-600 dark:text-red-400">{error}</p></div>}
         </div>

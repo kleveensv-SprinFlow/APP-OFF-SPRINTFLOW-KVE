@@ -21,9 +21,6 @@ interface ProfileData {
   sport: string | null;
   discipline: string | null;
   favorite_disciplines: any;
-  tour_cou_cm: number | null;
-  tour_taille_cm: number | null;
-  tour_hanches_cm: number | null;
 }
 
 export function ProfilePage() {
@@ -48,7 +45,7 @@ export function ProfilePage() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, full_name, date_de_naissance, taille_cm, taille_derniere_modif, photo_url, avatar_url, sexe, sport, discipline, favorite_disciplines, tour_cou_cm, tour_taille_cm, tour_hanches_cm')
+        .select('id, first_name, last_name, full_name, date_de_naissance, taille_cm, taille_derniere_modif, photo_url, avatar_url, sexe, sport, discipline, favorite_disciplines')
         .eq('id', user.id)
         .single();
 
