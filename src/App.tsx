@@ -213,7 +213,7 @@ function App() {
             onSave={handleWorkoutSave}
             onCancel={() => {
               setEditingWorkout(null);
-              navigateBack();
+              setNavigationStack(['dashboard']);
             }}
           />
         )}

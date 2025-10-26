@@ -146,7 +146,7 @@ export function NewWorkoutForm({ editingWorkout, onSave, onCancel }: NewWorkoutF
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-4 space-y-6 pb-24">
+      <form onSubmit={handleSubmit} className="p-4 space-y-6 pb-32">
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-4">
           <h3 className="font-semibold text-gray-900 dark:text-white">Informations générales</h3>
 
