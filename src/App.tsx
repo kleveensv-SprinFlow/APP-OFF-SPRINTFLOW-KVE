@@ -10,7 +10,6 @@ import Auth from './components/Auth';
 import { LoadingScreen } from './components/LoadingScreen';
 import Header from './components/navigation/Header';
 import TabBar from './components/TabBar';
-import FloatingActionButton from './components/FloatingActionButton';
 import Dashboard from './components/Dashboard';
 import { WorkoutsList } from './components/workouts/WorkoutsList';
 import { NewWorkoutForm } from './components/workouts/NewWorkoutForm';
@@ -57,9 +56,9 @@ function App() {
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
       console.error('Erreur globale capturée:', event.error);
-      
+
       // Ignorer certaines erreurs non critiques
-      if (event.error?.message?.includes('infinite recursion') || 
+      if (event.error?.message?.includes('infinite recursion') ||
           event.error?.message?.includes('Auth session missing')) {
         return;
       }
@@ -67,9 +66,9 @@ function App() {
 
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       console.error('Promise rejetée:', event.reason);
-      
+
       // Ignorer certaines erreurs non critiques
-      if (event.reason?.message?.includes('infinite recursion') || 
+      if (event.reason?.message?.includes('infinite recursion') ||
           event.reason?.message?.includes('Auth session missing')) {
         event.preventDefault();
         return;
@@ -92,9 +91,9 @@ function App() {
         navigateTo(event.detail);
       }
     };
-    
+
     window.addEventListener('change-view', handleViewChange);
-    
+
     return () => {
       window.removeEventListener('change-view', handleViewChange);
     };
@@ -169,7 +168,7 @@ function App() {
       localStorage.removeItem(`bodycomps_${user.id}`);
       localStorage.removeItem(`records_${user.id}`);
       localStorage.removeItem(`workouts_${user.id}`);
-      
+
       // Recharger la page pour récupérer les données fraîches
       window.location.reload();
     }
@@ -181,11 +180,12 @@ function App() {
         userRole={effectiveRole}
         onRefreshData={refreshData}
         onProfileClick={() => navigateTo('profile')}
+        onWorkoutsClick={() => navigateTo('workouts')}
         canGoBack={navigationStack.length > 1}
         onBack={navigateBack}
         title={getViewTitle(currentView)}
       />
-      
+
       <main className="p-6 pb-20">
         {/* Dashboard */}
         {currentView === 'dashboard' && (
@@ -196,10 +196,10 @@ function App() {
             onScoresLoad={(fn) => setRefreshScores(() => fn)}
           />
         )}
-        
+
         {/* Workouts */}
         {currentView === 'workouts' && (
-          <WorkoutsList 
+          <WorkoutsList
             onAddWorkout={() => navigateTo('add-workout')}
             onEditWorkout={(workout) => {
               setEditingWorkout(workout);
@@ -217,35 +217,35 @@ function App() {
             }}
           />
         )}
-        
+
         {/* Records */}
         {currentView === 'records' && (
           <RecordsList onAddRecord={() => navigateTo('add-record')} />
         )}
         {currentView === 'add-record' && (
-          <RecordsForm 
+          <RecordsForm
             records={records || []}
             onSave={handleRecordSave}
             onCancel={navigateBack}
           />
         )}
-        
+
         {/* Body Composition */}
         {currentView === 'bodycomp' && (
           <BodyCompCharts onAddEntry={() => navigateTo('add-bodycomp')} />
         )}
         {currentView === 'add-bodycomp' && (
-          <BodyCompForm 
+          <BodyCompForm
             onSave={handleBodyCompSave}
             onCancel={navigateBack}
           />
         )}
-        
+
         {/* Detailed Analysis */}
         {currentView === 'ai' && (
           <DetailedAnalysis />
         )}
-        
+
         {/* Groups */}
         {currentView === 'groups' && effectiveRole === 'athlete' && (
           <AthleteGroupView />
@@ -253,12 +253,12 @@ function App() {
         {currentView === 'groups' && effectiveRole === 'coach' && (
           <GroupManagement />
         )}
-        
+
         {/* Chat */}
         {currentView === 'chat' && effectiveRole === 'coach' && (
           <CoachGroupChat />
         )}
-        
+
         {/* Planning */}
         {currentView === 'planning' && effectiveRole === 'athlete' && (
           <AthletePlanning />
@@ -266,12 +266,12 @@ function App() {
         {currentView === 'planning' && effectiveRole === 'coach' && (
           <CoachPlanning />
         )}
-        
+
         {/* Profile */}
         {currentView === 'profile' && (
           <ProfilePage />
         )}
-        
+
         {/* Partnerships */}
         {currentView === 'partnerships' && (
           <PartnershipsList />
@@ -287,18 +287,17 @@ function App() {
           <DeveloperPanel />
         )}
       </main>
-      
+
       {/* Navigation Components */}
-      {effectiveRole === 'athlete' && <FloatingActionButton onViewChange={navigateTo} />}
       <TabBar
         currentView={currentView}
         onViewChange={(view) => setNavigationStack([view])}
         userRole={effectiveRole}
       />
-      
+
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
-      
+
       {/* Global Notifications */}
       <NotificationDisplay />
     </div>
