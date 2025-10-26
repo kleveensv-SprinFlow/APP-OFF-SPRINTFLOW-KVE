@@ -4,13 +4,13 @@ import useAuth from './hooks/useAuth';
 import { useWorkouts } from './hooks/useWorkouts';
 import { useRecords } from './hooks/useRecords';
 import { useBodyComposition } from './hooks/useBodyComposition';
+import { isSupabaseConfigured } from './lib/supabase';
 
 // Components
 import Auth from './components/Auth';
 import { LoadingScreen } from './components/LoadingScreen';
-import Header from './components/navigation/Header';
-import TabBar from './components/navigation/TabBar';
-import FloatingActionButton from './components/navigation/FloatingActionButton';
+import Header from './components/Header';
+import Navigation from './components/Navigation';
 import Dashboard from './components/Dashboard';
 import { WorkoutsList } from './components/workouts/WorkoutsList';
 import { NewWorkoutForm } from './components/workouts/NewWorkoutForm';
@@ -30,28 +30,17 @@ import { PartnershipsList } from './components/PartnershipsList';
 import { DeveloperPanel } from './components/developer/DeveloperPanel';
 import { NotificationDisplay } from './components/NotificationDisplay';
 import { NutritionModule } from './components/nutrition/NutritionModule';
-import { getViewTitle } from './utils/navigation';
 
 function App() {
   const { user, profile, loading, error } = useAuth();
   const { workouts, saveWorkout, updateWorkout } = useWorkouts();
   const { records, saveRecord } = useRecords();
   const { bodyComps, saveBodyComposition } = useBodyComposition();
-  const [navigationStack, setNavigationStack] = useState<View[]>(['dashboard']);
-  const currentView = navigationStack[navigationStack.length - 1];
+  const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editingWorkout, setEditingWorkout] = useState<any>(null);
   const [appError, setAppError] = useState<string | null>(null);
   const [refreshScores, setRefreshScores] = useState<(() => Promise<void>) | null>(null);
-
-  const navigateTo = (view: View) => {
-    setNavigationStack([...navigationStack, view]);
-  };
-
-  const navigateBack = () => {
-    if (navigationStack.length > 1) {
-      setNavigationStack(navigationStack.slice(0, -1));
-    }
-  };
 
   // Gestionnaire d'erreur global
   useEffect(() => {
@@ -89,7 +78,7 @@ function App() {
   useEffect(() => {
     const handleViewChange = (event: any) => {
       if (event.detail) {
-        navigateTo(event.detail);
+        setCurrentView(event.detail);
       }
     };
     
@@ -98,7 +87,7 @@ function App() {
     return () => {
       window.removeEventListener('change-view', handleViewChange);
     };
-  }, [navigationStack]);
+  }, []);
 
   // Afficher l'écran de chargement pendant l'initialisation
   if (loading) {
@@ -126,9 +115,9 @@ function App() {
         console.log('➕ Mode création nouvelle séance');
         await saveWorkout(workoutData);
       }
-      console.log('✅ Sauvegarde terminée, retour en arrière...');
+      console.log('✅ Sauvegarde terminée, changement de vue...');
       setEditingWorkout(null);
-      navigateBack();
+      setCurrentView('workouts');
       if (refreshScores) {
         await refreshScores();
       }
@@ -141,7 +130,7 @@ function App() {
   const handleRecordSave = async (recordData: any) => {
     try {
       await saveRecord(recordData);
-      navigateBack();
+      setCurrentView('records');
       if (refreshScores) {
         await refreshScores();
       }
@@ -153,7 +142,7 @@ function App() {
   const handleBodyCompSave = async (bodyCompData: any) => {
     try {
       await saveBodyComposition(bodyCompData);
-      navigateBack();
+      setCurrentView('bodycomp');
       if (refreshScores) {
         await refreshScores();
       }
@@ -178,123 +167,123 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header
+        onMenuClick={() => setSidebarOpen(true)}
         userRole={effectiveRole}
         onRefreshData={refreshData}
-        onProfileClick={() => navigateTo('profile')}
-        canGoBack={navigationStack.length > 1}
-        onBack={navigateBack}
-        title={getViewTitle(currentView)}
+        onProfileClick={() => setCurrentView('profile')}
       />
       
-      <main className="p-6 pb-20">
-        {/* Dashboard */}
-        {currentView === 'dashboard' && (
-          <Dashboard
-            workouts={workouts || []}
-            onViewChange={navigateTo}
-            userRole={effectiveRole}
-            onScoresLoad={(fn) => setRefreshScores(() => fn)}
-          />
-        )}
-
-        {/* Workouts */}
-        {currentView === 'workouts' && (
-          <WorkoutsList
-            onAddWorkout={() => navigateTo('add-workout')}
-            onEditWorkout={(workout) => {
-              setEditingWorkout(workout);
-              navigateTo('add-workout');
-            }}
-          />
-        )}
-        {currentView === 'add-workout' && (
-          <NewWorkoutForm
-            editingWorkout={editingWorkout}
-            onSave={handleWorkoutSave}
-            onCancel={() => {
-              setEditingWorkout(null);
-              navigateBack();
-            }}
-          />
-        )}
-
-        {/* Records */}
-        {currentView === 'records' && (
-          <RecordsList onAddRecord={() => navigateTo('add-record')} />
-        )}
-        {currentView === 'add-record' && (
-          <RecordsForm
-            records={records || []}
-            onSave={handleRecordSave}
-            onCancel={navigateBack}
-          />
-        )}
-
-        {/* Body Composition */}
-        {currentView === 'bodycomp' && (
-          <BodyCompCharts onAddEntry={() => navigateTo('add-bodycomp')} />
-        )}
-        {currentView === 'add-bodycomp' && (
-          <BodyCompForm
-            onSave={handleBodyCompSave}
-            onCancel={navigateBack}
-          />
-        )}
+      <div className="flex">
+        <Navigation
+          currentView={currentView}
+          onViewChange={setCurrentView}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          userRole={effectiveRole}
+        />
         
-        {/* Detailed Analysis */}
-        {currentView === 'ai' && (
-          <DetailedAnalysis />
-        )}
+        <main className="flex-1 p-6 pt-4">
+          {/* Dashboard */}
+          {currentView === 'dashboard' && (
+            <Dashboard
+              workouts={workouts || []}
+              onViewChange={setCurrentView}
+              userRole={effectiveRole}
+              onScoresLoad={(fn) => setRefreshScores(() => fn)}
+            />
+          )}
 
-        {/* Groups */}
-        {currentView === 'groups' && effectiveRole === 'athlete' && (
-          <AthleteGroupView />
-        )}
-        {currentView === 'groups' && effectiveRole === 'coach' && (
-          <GroupManagement />
-        )}
+          {/* Workouts */}
+          {currentView === 'workouts' && (
+            <WorkoutsList
+              onAddWorkout={() => setCurrentView('add-workout')}
+              onEditWorkout={(workout) => {
+                setEditingWorkout(workout);
+                setCurrentView('add-workout');
+              }}
+            />
+          )}
+          {currentView === 'add-workout' && (
+            <NewWorkoutForm
+              editingWorkout={editingWorkout}
+              onSave={handleWorkoutSave}
+              onCancel={() => {
+                setEditingWorkout(null);
+                setCurrentView('workouts');
+              }}
+            />
+          )}
 
-        {/* Chat */}
-        {currentView === 'chat' && effectiveRole === 'coach' && (
-          <CoachGroupChat />
-        )}
+          {/* Records */}
+          {currentView === 'records' && (
+            <RecordsList onAddRecord={() => setCurrentView('add-record')} />
+          )}
+          {currentView === 'add-record' && (
+            <RecordsForm
+              records={records || []}
+              onSave={handleRecordSave}
+              onCancel={() => setCurrentView('records')}
+            />
+          )}
 
-        {/* Planning */}
-        {currentView === 'planning' && effectiveRole === 'athlete' && (
-          <AthletePlanning />
-        )}
-        {currentView === 'planning' && effectiveRole === 'coach' && (
-          <CoachPlanning />
-        )}
+          {/* Body Composition */}
+          {currentView === 'bodycomp' && (
+            <BodyCompCharts onAddEntry={() => setCurrentView('add-bodycomp')} />
+          )}
+          {currentView === 'add-bodycomp' && (
+            <BodyCompForm
+              onSave={handleBodyCompSave}
+              onCancel={() => setCurrentView('bodycomp')}
+            />
+          )}
 
-        {/* Profile */}
-        {currentView === 'profile' && (
-          <ProfilePage />
-        )}
+          {/* Detailed Analysis */}
+          {currentView === 'ai' && (
+            <DetailedAnalysis />
+          )}
 
-        {/* Partnerships */}
-        {currentView === 'partnerships' && (
-          <PartnershipsList />
-        )}
+          {/* Groups */}
+          {currentView === 'groups' && effectiveRole === 'athlete' && (
+            <AthleteGroupView />
+          )}
+          {currentView === 'groups' && effectiveRole === 'coach' && (
+            <GroupManagement />
+          )}
 
-        {/* Nutrition */}
-        {currentView === 'nutrition' && (
-          <NutritionModule />
-        )}
+          {/* Chat */}
+          {currentView === 'chat' && effectiveRole === 'coach' && (
+            <CoachGroupChat />
+          )}
 
-        {/* Developer Panel */}
-        {currentView === 'developer' && user && user.id === '75a1759-b45b-4dd1-883b-ce8ccfe03f0f' && (
-          <DeveloperPanel />
-        )}
-      </main>
+          {/* Planning */}
+          {currentView === 'planning' && effectiveRole === 'athlete' && (
+            <AthletePlanning />
+          )}
+          {currentView === 'planning' && effectiveRole === 'coach' && (
+            <CoachPlanning />
+          )}
 
-      {/* Navigation Components */}
-      {effectiveRole === 'athlete' && <FloatingActionButton onViewChange={navigateTo} />}
-      <TabBar
-        currentView={currentView}
-        onViewChange={(view) => setNavigationStack([view])}
-        userRole={effectiveRole}
-      />
+          {/* Profile */}
+          {currentView === 'profile' && (
+            <ProfilePage />
+          )}
+
+          {/* Partnerships */}
+          {currentView === 'partnerships' && (
+            <PartnershipsList />
+          )}
+
+          {/* Nutrition */}
+          {currentView === 'nutrition' && (
+            <NutritionModule />
+          )}
+
+          {/* Developer Panel */}
+          {currentView === 'developer' && user && user.id === '75a17559-b45b-4dd1-883b-ce8ccfe03f0f' && (
+            <DeveloperPanel />
+          )}
+        </main>
+      </div>
       
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Edit, Lock, LogOut, Calendar, Ruler, Mail, Loader2, Camera, Trash2 } from 'lucide-react';
+import { User, Edit, Lock, LogOut, Calendar, Ruler, Mail, Loader2, Camera, Trash2, Shield, Target } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { EditInfoModal } from './EditInfoModal';
 import { EditAthleticDataModal } from './EditAthleticDataModal';
@@ -14,6 +14,11 @@ interface ProfileData {
   taille_cm: number | null;
   taille_derniere_modif: string | null;
   avatar_url: string | null;
+  sexe: 'male' | 'female' | null;
+  discipline: string | null;
+  tour_cou_cm: number | null;
+  tour_taille_cm: number | null;
+  tour_hanches_cm: number | null;
 }
 
 export function ProfilePage() {
@@ -31,34 +36,20 @@ export function ProfilePage() {
   }, []);
 
   const loadProfile = async () => {
+    setIsLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) throw new Error("User not found");
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, date_de_naissance, taille_cm, taille_derniere_modif, avatar_url')
+        .select('id, full_name, date_de_naissance, taille_cm, taille_derniere_modif, avatar_url, sexe, discipline, tour_cou_cm, tour_taille_cm, tour_hanches_cm')
         .eq('id', user.id)
-        .maybeSingle();
+        .single();
 
       if (error) throw error;
 
-      if (data) {
-        setProfile({
-          ...data,
-          email: user.email || '',
-        });
-      } else {
-        setProfile({
-          id: user.id,
-          full_name: user.email?.split('@')[0] || 'Utilisateur',
-          email: user.email || '',
-          date_de_naissance: null,
-          taille_cm: null,
-          taille_derniere_modif: null,
-          avatar_url: null,
-        });
-      }
+      setProfile({ ...data, email: user.email || '' });
     } catch (error) {
       console.error('Erreur chargement profil:', error);
     } finally {
@@ -67,269 +58,101 @@ export function ProfilePage() {
   };
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Erreur déconnexion:', error);
-    }
+    await supabase.auth.signOut();
   };
 
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      alert('Veuillez sélectionner une image');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert('L\'image ne doit pas dépasser 5 MB');
-      return;
-    }
-
     setUploadingPhoto(true);
-
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Non authentifié');
-
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('profiles')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('profiles')
-        .getPublicUrl(filePath);
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      await loadProfile();
-    } catch (err: any) {
+      const filePath = `avatars/${user.id}.${fileExt}`;
+      await supabase.storage.from('profiles').upload(filePath, file, { upsert: true });
+      const { data: { publicUrl } } = supabase.storage.from('profiles').getPublicUrl(filePath);
+      await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
+      loadProfile();
+    } catch (err) {
       console.error('Erreur upload photo:', err);
-      alert(err.message || 'Erreur lors de l\'upload de la photo');
     } finally {
       setUploadingPhoto(false);
     }
   };
 
-  const getInitials = (name: string) => {
-    if (!name) return 'U';
-    const parts = name.split(' ');
-    if (parts.length >= 2) {
-      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
-  };
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Non renseignée';
-    return new Date(dateString).toLocaleDateString('fr-FR');
-  };
+  const getInitials = (name: string) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
+  const formatDate = (date: string | null) => date ? new Date(date).toLocaleDateString('fr-FR') : 'Non renseigné';
+  const formatDiscipline = (d: string | null) => d ? d.charAt(0).toUpperCase() + d.slice(1) : 'Non spécifiée';
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
-      </div>
-    );
+    return <div className="flex items-center justify-center h-screen"><Loader2 className="w-12 h-12 animate-spin text-blue-600" /></div>;
   }
-
   if (!profile) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-600 dark:text-gray-400">Erreur de chargement du profil</p>
-      </div>
-    );
+    return <div className="flex items-center justify-center h-screen"><p>Profil non trouvé.</p></div>;
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-8">
-        <div className="flex items-center gap-6 mb-8">
+    <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 md:p-8">
+        <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
           <div className="relative">
             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg overflow-hidden">
-              {profile.avatar_url ? (
-                <img src={profile.avatar_url} alt="Avatar" className="w-full h-full rounded-full object-cover" />
-              ) : (
-                getInitials(profile.full_name)
-              )}
+              {profile.avatar_url ? <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" /> : getInitials(profile.full_name)}
             </div>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadingPhoto}
-              className="absolute bottom-0 right-0 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-colors disabled:opacity-50"
-              title="Changer la photo de profil"
-            >
-              {uploadingPhoto ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Camera className="w-4 h-4" />
-              )}
+            <button onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto} className="absolute bottom-0 right-0 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-colors disabled:opacity-50">
+              {uploadingPhoto ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
             </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoUpload}
-              className="hidden"
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{profile.full_name}</h1>
-            <p className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
-              <Mail className="w-4 h-4" />
-              {profile.email}
-            </p>
+            <p className="text-gray-600 dark:text-gray-400 flex items-center gap-2"><Mail className="w-4 h-4" />{profile.email}</p>
           </div>
         </div>
 
         <div className="space-y-6">
+          {/* Informations Personnelles */}
           <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Informations du Compte
-              </h2>
-              <button
-                onClick={() => setShowEditInfoModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
-              >
-                <Edit className="w-4 h-4" />
-                Modifier mes informations
-              </button>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2"><User className="w-5 h-5" />Informations Personnelles</h2>
+              <button onClick={() => setShowEditInfoModal(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"><Edit className="w-4 h-4" />Modifier</button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Nom complet</p>
-                <p className="text-lg font-medium text-gray-900 dark:text-white">{profile.full_name}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Email</p>
-                <p className="text-lg font-medium text-gray-900 dark:text-white">{profile.email}</p>
-              </div>
+            <p className="text-lg font-medium text-gray-900 dark:text-white">{profile.full_name}</p>
+          </div>
+
+          {/* Données Athlétiques */}
+          <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2"><Target className="w-5 h-5" />Données Athlétiques</h2>
+              <button onClick={() => setShowEditAthleticModal(true)} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm"><Edit className="w-4 h-4" />Mettre à jour</button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div><p className="text-sm text-gray-600 dark:text-gray-400">Discipline</p><p className="text-lg font-medium text-gray-900 dark:text-white">{formatDiscipline(profile.discipline)}</p></div>
+              <div><p className="text-sm text-gray-600 dark:text-gray-400">Date de naissance</p><p className="text-lg font-medium text-gray-900 dark:text-white">{formatDate(profile.date_de_naissance)}</p></div>
+              <div><p className="text-sm text-gray-600 dark:text-gray-400">Taille</p><p className="text-lg font-medium text-gray-900 dark:text-white">{profile.taille_cm ? `${profile.taille_cm} cm` : 'N/A'}</p></div>
+              <div><p className="text-sm text-gray-600 dark:text-gray-400">Tour de cou</p><p className="text-lg font-medium text-gray-900 dark:text-white">{profile.tour_cou_cm ? `${profile.tour_cou_cm} cm` : 'N/A'}</p></div>
+              <div><p className="text-sm text-gray-600 dark:text-gray-400">Tour de taille</p><p className="text-lg font-medium text-gray-900 dark:text-white">{profile.tour_taille_cm ? `${profile.tour_taille_cm} cm` : 'N/A'}</p></div>
+              {profile.sexe === 'female' && <div><p className="text-sm text-gray-600 dark:text-gray-400">Tour de hanches</p><p className="text-lg font-medium text-gray-900 dark:text-white">{profile.tour_hanches_cm ? `${profile.tour_hanches_cm} cm` : 'N/A'}</p></div>}
             </div>
           </div>
 
+          {/* Sécurité */}
           <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Données Athlétiques
-              </h2>
-              <button
-                onClick={() => setShowEditAthleticModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm"
-              >
-                <Edit className="w-4 h-4" />
-                Mettre à jour mes données
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Date de naissance</p>
-                <p className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  {formatDate(profile.date_de_naissance)}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Taille</p>
-                <p className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                  <Ruler className="w-4 h-4" />
-                  {profile.taille_cm ? `${profile.taille_cm} cm` : 'Non renseignée'}
-                </p>
-              </div>
-            </div>
-            {profile.taille_derniere_modif && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
-                Dernière modification de la taille : {formatDate(profile.taille_derniere_modif)}
-              </p>
-            )}
-          </div>
-
-          <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <Lock className="w-5 h-5" />
-              Sécurité & Gestion
-            </h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2"><Shield className="w-5 h-5" />Sécurité</h2>
             <div className="space-y-3">
-              <button
-                onClick={() => setShowChangePasswordModal(true)}
-                className="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <Lock className="w-5 h-5 text-blue-600" />
-                  <span className="font-medium text-gray-900 dark:text-white">Changer le mot de passe</span>
-                </div>
-                <Edit className="w-4 h-4 text-gray-400" />
-              </button>
-
-              <button
-                onClick={handleSignOut}
-                className="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <LogOut className="w-5 h-5 text-gray-600" />
-                  <span className="font-medium text-gray-900 dark:text-white">Se déconnecter</span>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setShowDeleteAccountModal(true)}
-                className="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-red-300 dark:hover:border-red-800 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <Trash2 className="w-5 h-5 text-red-600" />
-                  <span className="font-medium text-red-600 dark:text-red-500">Supprimer mon compte</span>
-                </div>
-              </button>
+              <button onClick={() => setShowChangePasswordModal(true)} className="w-full flex justify-between items-center p-4 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg border dark:border-gray-600 transition-colors"><span className="font-medium text-gray-900 dark:text-white">Changer le mot de passe</span><Edit className="w-4 h-4 text-gray-400" /></button>
+              <button onClick={handleSignOut} className="w-full flex justify-between items-center p-4 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg border dark:border-gray-600 transition-colors"><span className="font-medium text-gray-900 dark:text-white">Se déconnecter</span><LogOut className="w-4 h-4 text-gray-500" /></button>
+              <button onClick={() => setShowDeleteAccountModal(true)} className="w-full flex justify-between items-center p-4 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg border dark:border-gray-600 hover:border-red-300 dark:hover:border-red-700 transition-colors"><span className="font-medium text-red-600 dark:text-red-500">Supprimer mon compte</span><Trash2 className="w-4 h-4 text-red-500" /></button>
             </div>
           </div>
         </div>
       </div>
 
-      {showEditInfoModal && (
-        <EditInfoModal
-          currentName={profile.full_name}
-          onClose={() => setShowEditInfoModal(false)}
-          onSaved={() => {
-            setShowEditInfoModal(false);
-            loadProfile();
-          }}
-        />
-      )}
-
-      {showEditAthleticModal && (
-        <EditAthleticDataModal
-          currentDateNaissance={profile.date_de_naissance}
-          currentTaille={profile.taille_cm}
-          tailleLastModif={profile.taille_derniere_modif}
-          onClose={() => setShowEditAthleticModal(false)}
-          onSaved={() => {
-            setShowEditAthleticModal(false);
-            loadProfile();
-          }}
-        />
-      )}
-
-      {showChangePasswordModal && (
-        <ChangePasswordModal onClose={() => setShowChangePasswordModal(false)} />
-      )}
-
-      {showDeleteAccountModal && (
-        <DeleteAccountModal onClose={() => setShowDeleteAccountModal(false)} />
-      )}
+      {showEditInfoModal && <EditInfoModal currentName={profile.full_name} onClose={() => setShowEditInfoModal(false)} onSaved={() => { setShowEditInfoModal(false); loadProfile(); }} />}
+      {showEditAthleticModal && <EditAthleticDataModal currentProfileData={profile} onClose={() => setShowEditAthleticModal(false)} onSaved={() => { setShowEditAthleticModal(false); loadProfile(); }} />}
+      {showChangePasswordModal && <ChangePasswordModal onClose={() => setShowChangePasswordModal(false)} />}
+      {showDeleteAccountModal && <DeleteAccountModal onClose={() => setShowDeleteAccountModal(false)} />}
     </div>
   );
 }

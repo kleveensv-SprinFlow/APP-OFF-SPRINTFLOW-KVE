@@ -3,22 +3,31 @@ import { X, Save, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface EditAthleticDataModalProps {
-  currentDateNaissance: string | null;
-  currentTaille: number | null;
-  tailleLastModif: string | null;
+  currentProfileData: {
+    date_de_naissance: string | null;
+    taille_cm: number | null;
+    taille_derniere_modif: string | null;
+    sexe: 'male' | 'female' | null;
+    discipline: string | null;
+    tour_cou_cm: number | null;
+    tour_taille_cm: number | null;
+    tour_hanches_cm: number | null;
+  };
   onClose: () => void;
   onSaved: () => void;
 }
 
-export function EditAthleticDataModal({
-  currentDateNaissance,
-  currentTaille,
-  tailleLastModif,
-  onClose,
-  onSaved,
-}: EditAthleticDataModalProps) {
-  const [dateNaissance, setDateNaissance] = useState(currentDateNaissance || '');
-  const [taille, setTaille] = useState(currentTaille?.toString() || '');
+export function EditAthleticDataModal({ currentProfileData, onClose, onSaved }: EditAthleticDataModalProps) {
+  const [formData, setFormData] = useState({
+    dateNaissance: currentProfileData.date_de_naissance || '',
+    taille: currentProfileData.taille_cm?.toString() || '',
+    sexe: currentProfileData.sexe || '',
+    discipline: currentProfileData.discipline || '',
+    tourCou: currentProfileData.tour_cou_cm?.toString() || '',
+    tourTaille: currentProfileData.tour_taille_cm?.toString() || '',
+    tourHanches: currentProfileData.tour_hanches_cm?.toString() || '',
+  });
+
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isTailleBlocked, setIsTailleBlocked] = useState(false);
@@ -26,65 +35,51 @@ export function EditAthleticDataModal({
 
   useEffect(() => {
     checkTailleModification();
-  }, [tailleLastModif]);
+  }, [currentProfileData.taille_derniere_modif]);
 
   const checkTailleModification = () => {
-    if (!tailleLastModif) {
-      setIsTailleBlocked(false);
-      return;
-    }
-
-    const lastModif = new Date(tailleLastModif);
-    const today = new Date();
-    const daysSinceLastModif = Math.floor((today.getTime() - lastModif.getTime()) / (1000 * 60 * 60 * 24));
-
+    if (!currentProfileData.taille_derniere_modif) return;
+    const lastModif = new Date(currentProfileData.taille_derniere_modif);
+    const daysSinceLastModif = (new Date().getTime() - lastModif.getTime()) / (1000 * 3600 * 24);
     if (daysSinceLastModif < 30) {
       setIsTailleBlocked(true);
       const nextDate = new Date(lastModif);
       nextDate.setDate(nextDate.getDate() + 30);
       setNextModifDate(nextDate.toLocaleDateString('fr-FR'));
-    } else {
-      setIsTailleBlocked(false);
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSave = async () => {
     setIsSaving(true);
     setError(null);
-
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Non authentifié');
 
-      const updates: any = {};
+      const updates: any = {
+        date_de_naissance: formData.dateNaissance || null,
+        sexe: formData.sexe || null,
+        discipline: formData.discipline || null,
+        tour_cou_cm: parseFloat(formData.tourCou) || null,
+        tour_taille_cm: parseFloat(formData.tourTaille) || null,
+        tour_hanches_cm: formData.sexe === 'female' ? parseFloat(formData.tourHanches) || null : null,
+      };
 
-      if (dateNaissance) {
-        updates.date_de_naissance = dateNaissance;
-      }
-
-      if (taille && !isTailleBlocked) {
-        const tailleNum = parseInt(taille);
-        if (isNaN(tailleNum) || tailleNum < 100 || tailleNum > 250) {
-          throw new Error('La taille doit être entre 100 et 250 cm');
-        }
+      if (formData.taille && !isTailleBlocked) {
+        const tailleNum = parseInt(formData.taille);
+        if (isNaN(tailleNum) || tailleNum < 100 || tailleNum > 250) throw new Error('La taille doit être entre 100 et 250 cm');
         updates.taille_cm = tailleNum;
         updates.taille_derniere_modif = new Date().toISOString();
       }
 
-      if (Object.keys(updates).length === 0) {
-        throw new Error('Aucune modification à enregistrer');
-      }
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', user.id);
-
+      const { error: updateError } = await supabase.from('profiles').update(updates).eq('id', user.id);
       if (updateError) throw updateError;
-
       onSaved();
     } catch (err: any) {
-      console.error('Erreur sauvegarde:', err);
       setError(err.message || 'Erreur lors de la sauvegarde');
     } finally {
       setIsSaving(false);
@@ -93,88 +88,80 @@ export function EditAthleticDataModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white">Mettre à jour mes données</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          >
-            <X className="w-6 h-6" />
-          </button>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+        <div className="p-6 border-b dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Données Athlétiques</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"><X className="w-6 h-6" /></button>
+          </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Date de naissance
-            </label>
-            <input
-              type="date"
-              value={dateNaissance}
-              onChange={(e) => setDateNaissance(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-            />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Discipline Principale</label>
+            <select name="discipline" value={formData.discipline} onChange={handleInputChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+              <option value="">Non spécifiée</option>
+              <option value="sprint">Sprint</option>
+              <option value="sauts">Sauts</option>
+              <option value="lancers">Lancers</option>
+              <option value="demi-fond">Demi-fond / Fond</option>
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sexe</label>
+              <select name="sexe" value={formData.sexe} onChange={handleInputChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+                <option value="">Non spécifié</option>
+                <option value="male">Homme</option>
+                <option value="female">Femme</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date de naissance</label>
+              <input type="date" name="dateNaissance" value={formData.dateNaissance} onChange={handleInputChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" />
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Taille (cm)
-            </label>
-            <input
-              type="number"
-              value={taille}
-              onChange={(e) => setTaille(e.target.value)}
-              disabled={isTailleBlocked}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-900"
-              placeholder="170"
-              min="100"
-              max="250"
-            />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Taille (cm)</label>
+            <input type="number" name="taille" value={formData.taille} onChange={handleInputChange} disabled={isTailleBlocked} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50" placeholder="175" />
             {isTailleBlocked && (
               <div className="mt-2 flex items-start gap-2 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
                 <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-orange-700 dark:text-orange-300">
-                  Pour garantir la fiabilité des calculs, vous ne pouvez modifier votre taille qu'une fois tous les 30 jours.
-                  <br />
-                  <strong>Prochaine modification possible le : {nextModifDate}</strong>
-                </p>
+                <p className="text-sm text-orange-700 dark:text-orange-300">Modification possible tous les 30 jours. Prochaine le : {nextModifDate}</p>
               </div>
             )}
           </div>
 
-          {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 pt-2">Les mensurations suivantes sont optionnelles mais permettent d'obtenir un score de performance beaucoup plus précis.</p>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tour de cou (cm)</label>
+              <input type="number" name="tourCou" value={formData.tourCou} onChange={handleInputChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="38" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tour de taille (cm)</label>
+              <input type="number" name="tourTaille" value={formData.tourTaille} onChange={handleInputChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="80" />
+            </div>
+          </div>
+
+          {formData.sexe === 'female' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tour de hanches (cm)</label>
+              <input type="number" name="tourHanches" value={formData.tourHanches} onChange={handleInputChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="95" />
             </div>
           )}
 
-          <div className="flex gap-3 pt-4">
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Enregistrement...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  Enregistrer
-                </>
-              )}
-            </button>
-            <button
-              onClick={onClose}
-              disabled={isSaving}
-              className="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white py-2 px-4 rounded-lg disabled:opacity-50 transition-colors"
-            >
-              Annuler
-            </button>
-          </div>
+          {error && <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3"><p className="text-sm text-red-600 dark:text-red-400">{error}</p></div>}
+        </div>
+
+        <div className="p-6 bg-gray-50 dark:bg-gray-800/50 border-t dark:border-gray-700 flex gap-3">
+          <button onClick={onClose} disabled={isSaving} className="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white py-2 px-4 rounded-lg disabled:opacity-50 transition-colors">Annuler</button>
+          <button onClick={handleSave} disabled={isSaving} className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg disabled:opacity-50 transition-colors">
+            {isSaving ? <><Loader2 className="w-4 h-4 animate-spin" /> Enregistrement...</> : <><Save className="w-4 h-4" /> Enregistrer</>}
+          </button>
         </div>
       </div>
     </div>
