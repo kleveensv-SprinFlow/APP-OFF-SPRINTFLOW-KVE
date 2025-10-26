@@ -17,7 +17,7 @@ interface ProfileData {
   taille_derniere_modif: string | null;
   avatar_url: string | null;
   photo_url: string | null;
-  sexe: 'male' | 'female' | null;
+  sexe: 'homme' | 'femme' | null;
   sport: string | null;
   discipline: string | null;
   favorite_disciplines: any;
@@ -214,7 +214,7 @@ export function ProfilePage() {
               <div><p className="text-sm text-gray-600 dark:text-gray-400">Sport</p><p className="text-lg font-medium text-gray-900 dark:text-white">{formatSport(profile.sport)}</p></div>
               <div className="col-span-2"><p className="text-sm text-gray-600 dark:text-gray-400">Disciplines de prédilection</p><p className="text-lg font-medium text-gray-900 dark:text-white">{formatDisciplines(profile.favorite_disciplines)}</p></div>
               <div><p className="text-sm text-gray-600 dark:text-gray-400">Date de naissance</p><p className="text-lg font-medium text-gray-900 dark:text-white">{formatDate(profile.date_de_naissance)}</p></div>
-              <div><p className="text-sm text-gray-600 dark:text-gray-400">Sexe</p><p className="text-lg font-medium text-gray-900 dark:text-white">{profile.sexe === 'male' ? 'Homme' : profile.sexe === 'female' ? 'Femme' : 'Non spécifié'}</p></div>
+              <div><p className="text-sm text-gray-600 dark:text-gray-400">Sexe</p><p className="text-lg font-medium text-gray-900 dark:text-white">{profile.sexe === 'homme' ? 'Homme' : profile.sexe === 'femme' ? 'Femme' : 'Non spécifié'}</p></div>
               <div><p className="text-sm text-gray-600 dark:text-gray-400">Taille</p><p className="text-lg font-medium text-gray-900 dark:text-white">{profile.taille_cm ? `${profile.taille_cm} cm` : 'Non renseigné'}</p></div>
             </div>
           </div>

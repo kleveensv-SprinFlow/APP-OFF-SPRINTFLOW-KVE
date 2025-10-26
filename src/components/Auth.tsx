@@ -410,8 +410,8 @@ export default function Auth() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 >
                   <option value="">Non spécifié</option>
-                  <option value="male">Homme</option>
-                  <option value="female">Femme</option>
+                  <option value="homme">Homme</option>
+                  <option value="femme">Femme</option>
                 </select>
               </div>
             </>

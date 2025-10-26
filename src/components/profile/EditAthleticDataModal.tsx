@@ -7,7 +7,7 @@ interface EditAthleticDataModalProps {
     date_de_naissance: string | null;
     taille_cm: number | null;
     taille_derniere_modif: string | null;
-    sexe: 'male' | 'female' | null;
+    sexe: 'homme' | 'femme' | null;
     discipline: string | null;
   };
   onClose: () => void;
@@ -104,8 +104,8 @@ export function EditAthleticDataModal({ currentProfileData, onClose, onSaved }: 
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sexe</label>
               <select name="sexe" value={formData.sexe} onChange={handleInputChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
                 <option value="">Non spécifié</option>
-                <option value="male">Homme</option>
-                <option value="female">Femme</option>
+                <option value="homme">Homme</option>
+                <option value="femme">Femme</option>
               </select>
             </div>
             <div>
