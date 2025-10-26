@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, LogOut, RefreshCw, Crown, User as UserIcon } from 'lucide-react';
+import { ChevronLeft, LogOut, RefreshCw, Crown, User as UserIcon, Dumbbell } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import { useProfile } from '../../hooks/useProfile';
 
@@ -7,12 +7,13 @@ interface HeaderProps {
   userRole?: 'athlete' | 'coach' | 'developer';
   onRefreshData?: () => void;
   onProfileClick?: () => void;
+  onWorkoutsClick?: () => void;
   canGoBack?: boolean;
   onBack?: () => void;
   title?: string;
 }
 
-export default function Header({ userRole, onRefreshData, onProfileClick, canGoBack, onBack, title }: HeaderProps) {
+export default function Header({ userRole, onRefreshData, onProfileClick, onWorkoutsClick, canGoBack, onBack, title }: HeaderProps) {
   const { profile } = useProfile();
   const { signOut } = useAuth();
 
@@ -25,7 +26,7 @@ export default function Header({ userRole, onRefreshData, onProfileClick, canGoB
   const handleSignOut = async () => {
     console.log('🚪 BOUTON DÉCONNEXION CLIQUÉ');
     await signOut();
-    
+
     setTimeout(() => {
       window.location.reload();
     }, 100);
@@ -45,7 +46,7 @@ export default function Header({ userRole, onRefreshData, onProfileClick, canGoB
             </button>
           )}
         </div>
-        
+
         <div className="flex-1 flex justify-center min-w-0">
           {!canGoBack ? (
             <div className="flex items-center space-x-3">
@@ -65,10 +66,10 @@ export default function Header({ userRole, onRefreshData, onProfileClick, canGoB
                   <UserIcon className="w-5 h-5 text-primary-500" />
                 )}
               </button>
-              
+
               <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-sm font-medium ${
                 (userRole === 'coach' || userRole === 'developer')
-                  ? 'bg-secondary-100 dark:bg-secondary-900/20 text-secondary-700 dark:text-secondary-300 border border-secondary-200 dark:border-secondary-800' 
+                  ? 'bg-secondary-100 dark:bg-secondary-900/20 text-secondary-700 dark:text-secondary-300 border border-secondary-200 dark:border-secondary-800'
                   : 'bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800'
               }`}>
                 {(userRole === 'coach' || userRole === 'developer') ? (
@@ -83,12 +84,19 @@ export default function Header({ userRole, onRefreshData, onProfileClick, canGoB
                   </>
                 )}
               </div>
+                <button
+                    onClick={onWorkoutsClick}
+                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200 button-3d"
+                    title="Séances"
+                >
+                    <Dumbbell className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+                </button>
             </div>
           ) : (
             <h1 className="text-lg font-bold text-gray-800 dark:text-gray-200 truncate">{title || ''}</h1>
           )}
         </div>
-        
+
         <div className="flex items-center space-x-2 flex-shrink-0 w-1/4 justify-end">
           <button
             onClick={handleRefresh}
@@ -97,7 +105,7 @@ export default function Header({ userRole, onRefreshData, onProfileClick, canGoB
           >
             <RefreshCw className="h-4 w-4 text-gray-600 dark:text-gray-300" />
           </button>
-          
+
           <button
             onClick={handleSignOut}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200 button-3d"
