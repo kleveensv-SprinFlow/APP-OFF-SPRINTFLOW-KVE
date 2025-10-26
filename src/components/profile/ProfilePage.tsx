@@ -8,12 +8,14 @@ import { DeleteAccountModal } from './DeleteAccountModal';
 
 interface ProfileData {
   id: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   date_de_naissance: string | null;
   taille_cm: number | null;
   taille_derniere_modif: string | null;
   avatar_url: string | null;
+  photo_url: string | null;
   sexe: 'male' | 'female' | null;
   discipline: string | null;
   tour_cou_cm: number | null;
@@ -43,13 +45,22 @@ export function ProfilePage() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, date_de_naissance, taille_cm, taille_derniere_modif, avatar_url, sexe, discipline, tour_cou_cm, tour_taille_cm, tour_hanches_cm')
+        .select('id, first_name, last_name, date_de_naissance, taille_cm, taille_derniere_modif, photo_url, sexe, discipline, tour_cou_cm, tour_taille_cm, tour_hanches_cm')
         .eq('id', user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur Supabase:', error);
+        throw error;
+      }
 
-      setProfile({ ...data, email: user.email || '' });
+      setProfile({
+        ...data,
+        first_name: data.first_name || user.user_metadata?.first_name || '',
+        last_name: data.last_name || user.user_metadata?.last_name || '',
+        email: user.email || '',
+        avatar_url: data.photo_url || null
+      });
     } catch (error) {
       console.error('Erreur chargement profil:', error);
     } finally {
@@ -81,7 +92,16 @@ export function ProfilePage() {
     }
   };
   
-  const getInitials = (name: string) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
+  const getInitials = (firstName: string, lastName: string) => {
+    const initials = [];
+    if (firstName) initials.push(firstName[0]);
+    if (lastName) initials.push(lastName[0]);
+    return initials.length > 0 ? initials.join('').toUpperCase() : 'U';
+  };
+
+  const getFullName = (firstName: string, lastName: string) => {
+    return `${firstName || ''} ${lastName || ''}`.trim() || 'Utilisateur';
+  };
   const formatDate = (date: string | null) => date ? new Date(date).toLocaleDateString('fr-FR') : 'Non renseigné';
   const formatDiscipline = (d: string | null) => d ? d.charAt(0).toUpperCase() + d.slice(1) : 'Non spécifiée';
 
@@ -98,7 +118,7 @@ export function ProfilePage() {
         <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
           <div className="relative">
             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg overflow-hidden">
-              {profile.avatar_url ? <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" /> : getInitials(profile.full_name)}
+              {profile.avatar_url ? <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" /> : getInitials(profile.first_name, profile.last_name)}
             </div>
             <button onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto} className="absolute bottom-0 right-0 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-colors disabled:opacity-50">
               {uploadingPhoto ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
@@ -106,7 +126,7 @@ export function ProfilePage() {
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{profile.full_name}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{getFullName(profile.first_name, profile.last_name)}</h1>
             <p className="text-gray-600 dark:text-gray-400 flex items-center gap-2"><Mail className="w-4 h-4" />{profile.email}</p>
           </div>
         </div>
@@ -118,7 +138,16 @@ export function ProfilePage() {
               <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2"><User className="w-5 h-5" />Informations Personnelles</h2>
               <button onClick={() => setShowEditInfoModal(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"><Edit className="w-4 h-4" />Modifier</button>
             </div>
-            <p className="text-lg font-medium text-gray-900 dark:text-white">{profile.full_name}</p>
+            <div className="space-y-2">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Prénom</p>
+                <p className="text-lg font-medium text-gray-900 dark:text-white">{profile.first_name || 'Non renseigné'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Nom</p>
+                <p className="text-lg font-medium text-gray-900 dark:text-white">{profile.last_name || 'Non renseigné'}</p>
+              </div>
+            </div>
           </div>
 
           {/* Données Athlétiques */}
@@ -149,7 +178,7 @@ export function ProfilePage() {
         </div>
       </div>
 
-      {showEditInfoModal && <EditInfoModal currentName={profile.full_name} onClose={() => setShowEditInfoModal(false)} onSaved={() => { setShowEditInfoModal(false); loadProfile(); }} />}
+      {showEditInfoModal && <EditInfoModal currentFirstName={profile.first_name} currentLastName={profile.last_name} onClose={() => setShowEditInfoModal(false)} onSaved={() => { setShowEditInfoModal(false); loadProfile(); }} />}
       {showEditAthleticModal && <EditAthleticDataModal currentProfileData={profile} onClose={() => setShowEditAthleticModal(false)} onSaved={() => { setShowEditAthleticModal(false); loadProfile(); }} />}
       {showChangePasswordModal && <ChangePasswordModal onClose={() => setShowChangePasswordModal(false)} />}
       {showDeleteAccountModal && <DeleteAccountModal onClose={() => setShowDeleteAccountModal(false)} />}

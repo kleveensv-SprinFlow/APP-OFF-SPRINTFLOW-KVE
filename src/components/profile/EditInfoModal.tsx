@@ -3,19 +3,21 @@ import { X, Save, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface EditInfoModalProps {
-  currentName: string;
+  currentFirstName: string;
+  currentLastName: string;
   onClose: () => void;
   onSaved: () => void;
 }
 
-export function EditInfoModal({ currentName, onClose, onSaved }: EditInfoModalProps) {
-  const [fullName, setFullName] = useState(currentName);
+export function EditInfoModal({ currentFirstName, currentLastName, onClose, onSaved }: EditInfoModalProps) {
+  const [firstName, setFirstName] = useState(currentFirstName);
+  const [lastName, setLastName] = useState(currentLastName);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSave = async () => {
-    if (!fullName.trim()) {
-      setError('Le nom ne peut pas être vide');
+    if (!firstName.trim() || !lastName.trim()) {
+      setError('Le prénom et le nom ne peuvent pas être vides');
       return;
     }
 
@@ -28,7 +30,10 @@ export function EditInfoModal({ currentName, onClose, onSaved }: EditInfoModalPr
 
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ full_name: fullName.trim() })
+        .update({
+          first_name: firstName.trim(),
+          last_name: lastName.trim()
+        })
         .eq('id', user.id);
 
       if (updateError) throw updateError;
@@ -58,14 +63,26 @@ export function EditInfoModal({ currentName, onClose, onSaved }: EditInfoModalPr
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Nom complet
+              Prénom
             </label>
             <input
               type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
               className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-              placeholder="Prénom Nom"
+              placeholder="Votre prénom"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Nom
+            </label>
+            <input
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              placeholder="Votre nom"
             />
           </div>
 
