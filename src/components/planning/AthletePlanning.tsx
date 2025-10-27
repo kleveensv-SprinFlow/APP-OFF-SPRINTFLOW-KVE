@@ -13,6 +13,7 @@ export const AthletePlanning: React.FC = () => {
   const [selectedSession, setSelectedSession] = useState<any>(null)
   const [planningLoading, setPlanningLoading] = useState(false)
   const [hasLoadedPlanning, setHasLoadedPlanning] = useState(false)
+  const [currentView, setCurrentView] = useState<'calendar' | 'list'>('calendar');
 
   // Charger le planning une seule fois quand on a des groupes
   useEffect(() => {
@@ -127,12 +128,31 @@ export const AthletePlanning: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mon Planning</h1>
-        <p className="text-gray-600 dark:text-gray-400">Programme d'entraînement assigné par votre coach</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Calendrier</h1>
+        <p className="text-gray-600 dark:text-gray-400">Planification et historique des entraînements</p>
       </div>
 
-      {/* Navigation semaine */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 shadow-lg border border-gray-200 dark:border-gray-700">
+      <div className="flex justify-center">
+        <div className="flex rounded-lg bg-gray-200 dark:bg-gray-700 p-1">
+          <button
+            onClick={() => setCurrentView('calendar')}
+            className={`px-4 py-2 text-sm font-medium rounded-md ${currentView === 'calendar' ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}
+          >
+            Calendrier
+          </button>
+          <button
+            onClick={() => setCurrentView('list')}
+            className={`px-4 py-2 text-sm font-medium rounded-md ${currentView === 'list' ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}
+          >
+            Entraînements Réalisés
+          </button>
+        </div>
+      </div>
+
+      {currentView === 'calendar' && (
+        <>
+          {/* Navigation semaine */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 shadow-lg border border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <button
             onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}
@@ -310,6 +330,15 @@ export const AthletePlanning: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400">
             Votre coach n'a pas encore créé de programme d'entraînement pour vous.
           </p>
+        </div>
+      )}
+      </>
+      )}
+
+      {currentView === 'list' && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-bold mb-4">Entraînements Réalisés</h2>
+          <p>Cette fonctionnalité est en cours de développement.</p>
         </div>
       )}
     </div>
