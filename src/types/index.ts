@@ -250,4 +250,6 @@ export type View =
   | 'profile'
   | 'subscription'
   | 'partnerships'
-  | 'developer';
+  | 'developer'
+  | 'nutrition'
+  | 'add-sleep';
