@@ -25,14 +25,14 @@ const ScoreCircle: React.FC<ScoreCircleProps> = ({ score, title, icon: Icon, col
 interface IndicesPanelProps {
   loading: boolean;
   scoreForme: any;
-  scorePerformance: any;
+  scorePoidsPuissance: any;
   scoreEvolution: any;
 }
 
-export function IndicesPanel({ loading, scoreForme, scorePerformance, scoreEvolution }: IndicesPanelProps) {
-  const [modalContent, setModalContent] = useState<{ type: 'forme' | 'performance' | 'evolution'; data: any } | null>(null);
+export function IndicesPanel({ loading, scoreForme, scorePoidsPuissance, scoreEvolution }: IndicesPanelProps) {
+  const [modalContent, setModalContent] = useState<{ type: 'forme' | 'poidsPuissance' | 'evolution'; data: any } | null>(null);
 
-  const handleScoreClick = (type: 'forme' | 'performance' | 'evolution', data: any) => {
+  const handleScoreClick = (type: 'forme' | 'poidsPuissance' | 'evolution', data: any) => {
     if (data && data.indice !== null) {
       setModalContent({ type, data });
     }
@@ -57,7 +57,7 @@ export function IndicesPanel({ loading, scoreForme, scorePerformance, scoreEvolu
       </div>
       <div className="flex justify-around items-start gap-2 sm:gap-4">
         <ScoreCircle score={scoreForme?.indice} title="Forme" icon={HeartPulse} color="border-green-400" onClick={() => handleScoreClick('forme', scoreForme)} />
-        <ScoreCircle score={scorePerformance?.indice} title="Performance" icon={Zap} color="border-blue-400" onClick={() => handleScoreClick('performance', scorePerformance)} />
+        <ScoreCircle score={scorePoidsPuissance?.indice} title="Poids/Puissance" icon={Zap} color="border-blue-400" onClick={() => handleScoreClick('poidsPuissance', scorePoidsPuissance)} />
         <ScoreCircle score={scoreEvolution?.indice} title="Évolution" icon={TrendingUp} color="border-purple-400" onClick={() => handleScoreClick('evolution', scoreEvolution)} />
       </div>
       
