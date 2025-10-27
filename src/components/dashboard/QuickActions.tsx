@@ -1,38 +1,45 @@
 import React from 'react';
-import { Dumbbell, Target, Users } from 'lucide-react';
+import { Bed, Scale, Users } from 'lucide-react';
+import { View } from '../../types';
 
 interface QuickActionsProps {
-  onViewChange: (view: 'workouts' | 'records' | 'groups') => void;
+  onViewChange: (view: View) => void;
 }
 
 export function QuickActions({ onViewChange }: QuickActionsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <button
-        onClick={() => onViewChange('workouts')}
-        className="bg-blue-600 hover:bg-blue-700 p-6 rounded-lg transition-all duration-200 text-white text-left"
+        onClick={() => onViewChange('add-bodycomp')}
+        className="bg-primary-600 hover:bg-primary-700 p-6 rounded-lg transition-all duration-200 text-white text-left flex flex-col justify-between"
       >
-        <Dumbbell className="h-8 w-8 mb-2" />
-        <h3 className="text-lg font-semibold">Nouvel entraînement</h3>
-        <p className="text-white/80 text-sm">Enregistrer une nouvelle séance</p>
+        <div>
+          <Scale className="h-8 w-8 mb-2" />
+          <h3 className="text-lg font-semibold">Ma pesée du jour</h3>
+        </div>
+        <p className="text-white/80 text-sm mt-2">Enregistrer votre poids</p>
       </button>
       
       <button
-        onClick={() => onViewChange('records')}
-        className="bg-purple-600 hover:bg-purple-700 p-6 rounded-lg transition-all duration-200 text-white text-left"
+        onClick={() => onViewChange('add-sleep')}
+        className="bg-secondary-600 hover:bg-secondary-700 p-6 rounded-lg transition-all duration-200 text-white text-left flex flex-col justify-between"
       >
-        <Target className="h-8 w-8 mb-2" />
-        <h3 className="text-lg font-semibold">Nouveau record</h3>
-        <p className="text-white/80 text-sm">Enregistrer une performance</p>
+        <div>
+          <Bed className="h-8 w-8 mb-2" />
+          <h3 className="text-lg font-semibold">Saisie du sommeil</h3>
+        </div>
+        <p className="text-white/80 text-sm mt-2">Qualifier votre nuit</p>
       </button>
       
       <button
         onClick={() => onViewChange('groups')}
-        className="bg-green-600 hover:bg-green-700 p-6 rounded-lg transition-all duration-200 text-white text-left"
+        className="bg-green-600 hover:bg-green-700 p-6 rounded-lg transition-all duration-200 text-white text-left flex flex-col justify-between"
       >
-        <Users className="h-8 w-8 mb-2" />
-        <h3 className="text-lg font-semibold">Groupe</h3>
-        <p className="text-white/80 text-sm">Voir le chat et les membres</p>
+        <div>
+          <Users className="h-8 w-8 mb-2" />
+          <h3 className="text-lg font-semibold">Groupe</h3>
+        </div>
+        <p className="text-white/80 text-sm mt-2">Voir le chat et les membres</p>
       </button>
     </div>
   );
