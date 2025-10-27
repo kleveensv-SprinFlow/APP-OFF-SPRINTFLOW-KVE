@@ -17,7 +17,7 @@ interface Group {
     id: string
     first_name?: string
     last_name?: string
-    photo_url?: string
+    avatar_url?: string
     role: string
   }
 }
@@ -31,7 +31,7 @@ interface GroupMember {
     id: string
     first_name?: string
     last_name?: string
-    photo_url?: string
+    avatar_url?: string
     role?: string
   }
 }
@@ -116,75 +116,36 @@ export function useGroups() {
   
   const loadMembersForGroups = async (groupsData: any[]) => {
     try {
-      console.log('👥 Chargement des membres pour', groupsData.length, 'groupes')
-      
-      // Charger tous les membres avec leurs profils complets - NOUVELLE REQUÊTE
+      console.log('👥 Chargement des membres pour', groupsData.length, 'groupes');
+      const groupIds = groupsData.map(g => g.id);
+
       const { data: allMembersData } = await supabase
         .from('group_members')
-        .select(`
-          id,
-          group_id,
-          athlete_id,
-          joined_at,
-          profiles!group_members_athlete_id_fkey(
-            id,
-            first_name,
-            last_name,
-            photo_url,
-            role,
-            full_name,
-            sport,
-            position,
-            team
-          )
-        `)
-        .in('group_id', groupsData.map(g => g.id))
-      
-      console.log('👥 Données membres avec profils:', allMembersData?.length || 0, 'membres trouvés')
-      
+        .select('id, group_id, athlete_id, joined_at')
+        .in('group_id', groupIds);
+
       if (allMembersData) {
-        // Grouper les membres par group_id
+        const athleteIds = allMembersData.map(m => m.athlete_id);
+        const { data: profiles, error: profilesError } = await supabase.rpc('get_user_profiles_by_ids', { user_ids: athleteIds });
+
+        if (profilesError) {
+          console.error('Erreur récupération profils membres (coach):', profilesError);
+          return;
+        }
+
         const membersByGroup = allMembersData.reduce((acc: Record<string, any[]>, member) => {
           if (!acc[member.group_id]) {
-            acc[member.group_id] = []
+            acc[member.group_id] = [];
           }
-          
-          // Restructurer les données pour compatibilité avec l'ancien format
-          const memberWithAthlete = {
-            ...member,
-            athlete: member.profiles ? {
-              id: member.profiles.id,
-              first_name: member.profiles.first_name,
-              last_name: member.profiles.last_name,
-              photo_url: member.profiles.photo_url,
-              role: member.profiles.role,
-              full_name: member.profiles.full_name,
-              sport: member.profiles.sport,
-              position: member.profiles.position,
-              team: member.profiles.team
-            } : null
-          }
-          
-          console.log(`👤 Membre ajouté:`, {
-            athlete_id: member.athlete_id,
-            first_name: member.profiles?.first_name,
-            last_name: member.profiles?.last_name,
-            photo_url: member.profiles?.photo_url
-          })
-          
-          acc[member.group_id].push(memberWithAthlete)
-          return acc
-        }, {})
-        
-        console.log('👥 Membres groupés:', Object.keys(membersByGroup).length, 'groupes avec membres')
-        
-        // Mettre à jour les groupes avec leurs membres
+          const profile = profiles.find(p => p.id === member.athlete_id);
+          acc[member.group_id].push({ ...member, athlete: profile || null });
+          return acc;
+        }, {});
+
         setGroups(prev => prev.map(group => ({
           ...group,
           members: membersByGroup[group.id] || []
-        })))
-        
-        console.log('✅ Groupes mis à jour avec', Object.values(membersByGroup).flat().length, 'membres au total')
+        })));
       }
     } catch (error) {
       console.error('⚠️ Erreur chargement membres:', error)
@@ -215,7 +176,7 @@ export function useGroups() {
               id,
               first_name,
               last_name,
-              photo_url,
+              avatar_url,
               role
             )
           )
@@ -248,46 +209,31 @@ export function useGroups() {
       if (groupIds.length > 0) {
         const { data: allMembersData } = await supabase
           .from('group_members')
-          .select(`
-            id,
-            group_id,
-            athlete_id,
-            joined_at,
-            profiles!group_members_athlete_id_fkey(
-              id,
-              first_name,
-              last_name,
-              photo_url,
-              role
-            )
-          `)
-          .in('group_id', groupIds)
-
+          .select('id, group_id, athlete_id, joined_at')
+          .in('group_id', groupIds);
+        
         if (allMembersData) {
+          const athleteIds = allMembersData.map(m => m.athlete_id);
+          const { data: profiles, error: profilesError } = await supabase.rpc('get_user_profiles_by_ids', { user_ids: athleteIds });
+
+          if (profilesError) {
+            console.error('Erreur récupération profils membres:', profilesError);
+            return;
+          }
+
           const membersByGroup = allMembersData.reduce((acc: Record<string, any[]>, member) => {
             if (!acc[member.group_id]) {
-              acc[member.group_id] = []
+              acc[member.group_id] = [];
             }
-
-            const memberWithAthlete = {
-              ...member,
-              athlete: member.profiles ? {
-                id: member.profiles.id,
-                first_name: member.profiles.first_name,
-                last_name: member.profiles.last_name,
-                photo_url: member.profiles.photo_url,
-                role: member.profiles.role
-              } : null
-            }
-
-            acc[member.group_id].push(memberWithAthlete)
-            return acc
-          }, {})
+            const profile = profiles.find(p => p.id === member.athlete_id);
+            acc[member.group_id].push({ ...member, athlete: profile || null });
+            return acc;
+          }, {});
 
           setGroups(prev => prev.map(group => ({
             ...group,
             members: membersByGroup[group.id] || []
-          })))
+          })));
         }
       }
 
