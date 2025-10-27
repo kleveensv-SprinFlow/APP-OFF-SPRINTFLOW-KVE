@@ -8,7 +8,7 @@ import { LoadingScreen } from '../LoadingScreen'
 
 export const AthletePlanning: React.FC = () => {
   const { groups } = useGroups()
-  const { sessionTemplates, loadAthleteGroupPlanning } = usePlanning()
+  const { sessionTemplates, loadAthleteGroupPlanning, markSessionAsCompleted } = usePlanning()
   const [currentWeek, setCurrentWeek] = useState<Date>(new Date())
   const [selectedSession, setSelectedSession] = useState<any>(null)
   const [planningLoading, setPlanningLoading] = useState(false)
@@ -38,16 +38,19 @@ export const AthletePlanning: React.FC = () => {
     }
   }, [groups, hasLoadedPlanning, planningLoading, loadAthleteGroupPlanning])
 
-  const markSessionCompleted = (sessionId: string) => {
+  const handleMarkSessionCompleted = async (sessionId: string, completed: boolean) => {
     try {
-      // Marquer localement
+      await markSessionAsCompleted(sessionId, completed)
+      
+      // Mettre à jour la session sélectionnée si c'est la bonne
       if (selectedSession && selectedSession.id === sessionId) {
-        setSelectedSession(prev => ({ ...prev, completed: true }))
+        setSelectedSession(prev => ({ ...prev, completed }))
       }
       
-      alert('✅ Séance marquée comme terminée!')
+      // Pas besoin d'alerte, le changement visuel est suffisant
     } catch (error) {
       console.error('Erreur marquage session:', error)
+      alert('❌ Erreur lors du marquage de la séance.')
     }
   }
 
@@ -216,7 +219,7 @@ export const AthletePlanning: React.FC = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          markSessionCompleted(session.id)
+                          handleMarkSessionCompleted(session.id, !session.completed)
                         }}
                         className={`p-0.5 sm:p-1 rounded transition-colors flex-shrink-0 ${
                           session.completed 
@@ -309,7 +312,7 @@ export const AthletePlanning: React.FC = () => {
               
               {!selectedSession.completed && (
                 <button
-                  onClick={() => markSessionCompleted(selectedSession.id)}
+                  onClick={() => handleMarkSessionCompleted(selectedSession.id, true)}
                   className="px-4 py-2 bg-green-500 hover:bg-green-600 rounded-lg text-white transition-colors"
                 >
                   Marquer comme terminée
@@ -338,7 +341,33 @@ export const AthletePlanning: React.FC = () => {
       {currentView === 'list' && (
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-bold mb-4">Entraînements Réalisés</h2>
-          <p>Cette fonctionnalité est en cours de développement.</p>
+          
+          {sessionTemplates.filter(s => s.completed).length > 0 ? (
+            <ul className="space-y-4">
+              {sessionTemplates
+                .filter(s => s.completed)
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .map(session => (
+                  <li key={session.id} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">{session.name}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {format(new Date(session.created_at), 'd MMMM yyyy', { locale: fr })}
+                      </p>
+                    </div>
+                    <CheckCircle className="h-6 w-6 text-green-500" />
+                  </li>
+                ))}
+            </ul>
+          ) : (
+            <div className="text-center py-8">
+              <CheckCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">Aucun entraînement réalisé</h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Marquez des séances comme terminées pour les voir ici.
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>
