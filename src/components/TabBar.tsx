@@ -12,17 +12,17 @@ const TabBar: React.FC<TabBarProps> = ({ currentView, onViewChange, userRole }) 
   const [isFabOpen, setIsFabOpen] = useState(false);
 
   const athleteNavItems = [
-    { view: 'dashboard' as View, icon: Home, label: 'Accueil' },
+    { view: 'records' as View, icon: BarChart3, label: 'Mes Records' },
     { view: 'nutrition' as View, icon: Apple, label: 'Nutrition' },
     null, // Placeholder for the FAB
-    { view: 'planning' as View, icon: Calendar, label: 'Planning' },
+    { view: 'planning' as View, icon: Calendar, label: 'Calendrier' },
     { view: 'ai' as View, icon: Lightbulb, label: 'Conseil' },
   ];
 
   const coachNavItems = [
     { view: 'dashboard' as View, icon: BarChart3, label: 'Dashboard' },
     { view: 'groups' as View, icon: Users, label: 'Athlètes' },
-    { view: 'planning' as View, icon: Calendar, label: 'Planning' },
+    { view: 'planning' as View, icon: Calendar, label: 'Calendrier' },
     { view: 'chat' as View, icon: MessageSquare, label: 'Chat' },
   ];
 
