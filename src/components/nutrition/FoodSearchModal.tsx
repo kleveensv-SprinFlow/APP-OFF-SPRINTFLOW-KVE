@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import Fuse from 'fuse.js';
 import { X, Search, Star, Plus, Camera } from 'lucide-react';
 import { useNutrition } from '../../hooks/useNutrition';
 import { BarcodeScanner } from './BarcodeScanner';
@@ -233,36 +234,25 @@ export function FoodSearchModal({ isOpen, onClose, onSelectFood, confirmButtonTe
           return [];
         });
 
-      // Recherche dans CIQUAL
-      const ciqualPromise = new Promise<FoodItem[]>(resolve => {
-        try {
-          const results = ciqualData
-            .filter(food => {
-              try {
-                return food.alim_nom_fr && food.alim_nom_fr.toLowerCase().includes(searchQuery.toLowerCase());
-              } catch (e) {
-                console.error('Error filtering Ciqual food:', e, food);
-                return false;
-              }
-            })
-            .map(food => {
-              try {
-                return mapCiqualToFoodItem(food);
-              } catch (e) {
-                console.error('Error mapping Ciqual food:', e, food);
-                return null;
-              }
-            })
-            .filter((food): food is FoodItem => food !== null);
-          resolve(results);
-        } catch (error) {
-          console.error('Error searching in Ciqual:', error);
-          resolve([]);
-        }
+      // Recherche dans CIQUAL avec Fuse.js
+      const ciqualFuse = new Fuse(ciqualData, {
+        keys: ['alim_nom_fr'],
+        includeScore: true,
+        threshold: 0.4,
       });
+      const ciqualResults = ciqualFuse.search(searchQuery).map(result => mapCiqualToFoodItem(result.item));
 
-      const [offResults, ciqualResults] = await Promise.all([offPromise, ciqualPromise]);
-      setSearchResults([...ciqualResults, ...offResults]);
+      const [offResults] = await Promise.all([offPromise]);
+
+      // Filtrer les résultats OFF avec Fuse pour pertinence
+      const offFuse = new Fuse(offResults, {
+        keys: ['nom'],
+        includeScore: true,
+        threshold: 0.4,
+      });
+      const filteredOffResults = offFuse.search(searchQuery).map(result => result.item);
+
+      setSearchResults([...ciqualResults, ...filteredOffResults]);
     } catch (error) {
       console.error('Error during search:', error);
       setError('Une erreur est survenue lors de la recherche. Veuillez réessayer.');
