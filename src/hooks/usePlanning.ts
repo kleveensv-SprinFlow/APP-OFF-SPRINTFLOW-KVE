@@ -334,6 +334,43 @@ export function usePlanning() {
     }
   }
 
+  const markSessionAsCompleted = async (sessionId: string, completed: boolean) => {
+    if (!user) throw new Error('Utilisateur non connecté')
+
+    try {
+      // Mettre à jour l'état local immédiatement pour une meilleure réactivité
+      setSessionTemplates(prev =>
+        prev.map(session =>
+          session.id === sessionId ? { ...session, completed } : session
+        )
+      )
+
+      // Mettre à jour la base de données
+      const { data, error } = await supabase
+        .from('session_templates')
+        .update({ completed, updated_at: new Date().toISOString() })
+        .eq('id', sessionId)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Erreur mise à jour séance:', error.message)
+        // Revenir à l'état précédent en cas d'erreur
+        setSessionTemplates(prev =>
+          prev.map(session =>
+            session.id === sessionId ? { ...session, completed: !completed } : session
+          )
+        )
+        throw error
+      }
+
+      return data
+    } catch (error) {
+      console.error('Erreur markSessionAsCompleted:', error)
+      throw error
+    }
+  }
+
   return {
     weeklyPlans,
     dailySessions,
@@ -349,6 +386,7 @@ export function usePlanning() {
     loadAthleteGroupPlanning,
     loadSessionTemplatesForGroup,
     loadAthletePlanning,
-    setSessionTemplates
+    setSessionTemplates,
+    markSessionAsCompleted
   }
 }
