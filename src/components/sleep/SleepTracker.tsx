@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Moon, Star, Save, Loader2 } from 'lucide-react';
+import { Moon, Star, Save, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { addDays, subDays, format, isToday as dateIsToday } from 'date-fns';
 
 interface SleepEntry {
   id: string;
@@ -10,7 +11,8 @@ interface SleepEntry {
 }
 
 export function SleepTracker() {
-  const [todayEntry, setTodayEntry] = useState<SleepEntry | null>(null);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [entry, setEntry] = useState<SleepEntry | null>(null);
   const [heureCoucher, setHeureCoucher] = useState<string>('23:00');
   const [heureReveil, setHeureReveil] = useState<string>('07:30');
   const [qualiteRessentie, setQualiteRessentie] = useState<number>(3);
@@ -18,45 +20,54 @@ export function SleepTracker() {
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-  const today = new Date().toISOString().split('T')[0];
+  const isToday = dateIsToday(currentDate);
 
   useEffect(() => {
-    loadTodayEntry();
-  }, []);
+    loadEntryForDate(currentDate);
+  }, [currentDate]);
 
-  const loadTodayEntry = async () => {
+  const loadEntryForDate = async (date: Date) => {
+    setIsLoading(true);
+    setMessage(null);
+    setEntry(null);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      const dateString = format(date, 'yyyy-MM-dd');
       const { data, error } = await supabase
         .from('sommeil_journalier')
         .select('*')
         .eq('athlete_id', user.id)
-        .eq('date', today)
+        .eq('date', dateString)
         .maybeSingle();
 
       if (error) throw error;
 
       if (data) {
-        setTodayEntry(data);
+        setEntry(data);
         setQualiteRessentie(data.qualite_ressentie);
-
-        const duree = data.duree_heures;
-        const reveillDefaut = new Date();
-        reveillDefaut.setHours(7, 30, 0, 0);
-
-        const coucherDate = new Date(reveillDefaut);
-        coucherDate.setHours(coucherDate.getHours() - Math.floor(duree));
-        coucherDate.setMinutes(coucherDate.getMinutes() - Math.round((duree % 1) * 60));
-
-        setHeureCoucher(coucherDate.toTimeString().substring(0, 5));
-        setHeureReveil(reveillDefaut.toTimeString().substring(0, 5));
+        // Logique pour déduire heure de coucher/lever si nécessaire
+      } else {
+        // Reset to default for new entries
+        setHeureCoucher('23:00');
+        setHeureReveil('07:30');
+        setQualiteRessentie(3);
       }
     } catch (error) {
       console.error('Erreur chargement sommeil:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handlePrevDay = () => {
+    setCurrentDate(subDays(currentDate, 1));
+  };
+
+  const handleNextDay = () => {
+    if (!isToday) {
+      setCurrentDate(addDays(currentDate, 1));
     }
   };
 
@@ -78,6 +89,8 @@ export function SleepTracker() {
   const dureeHeures = calculateDuree(heureCoucher, heureReveil);
 
   const handleSave = async () => {
+    if (!isToday) return;
+
     setIsSaving(true);
     setMessage(null);
 
@@ -85,31 +98,31 @@ export function SleepTracker() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Non authentifié');
 
-      if (todayEntry) {
+      const dateString = format(currentDate, 'yyyy-MM-dd');
+      const sleepData = {
+        duree_heures: dureeHeures,
+        qualite_ressentie: qualiteRessentie,
+      };
+
+      if (entry) {
         const { error } = await supabase
           .from('sommeil_journalier')
-          .update({
-            duree_heures: dureeHeures,
-            qualite_ressentie: qualiteRessentie,
-          })
-          .eq('id', todayEntry.id);
-
+          .update(sleepData)
+          .eq('id', entry.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('sommeil_journalier')
           .insert({
+            ...sleepData,
             athlete_id: user.id,
-            date: today,
-            duree_heures: dureeHeures,
-            qualite_ressentie: qualiteRessentie,
+            date: dateString,
           });
-
         if (error) throw error;
       }
 
       setMessage({ type: 'success', text: 'Enregistré !' });
-      await loadTodayEntry();
+      await loadEntryForDate(currentDate);
     } catch (error: any) {
       console.error('Erreur sauvegarde:', error);
       setMessage({ type: 'error', text: 'Erreur de sauvegarde' });
@@ -135,18 +148,20 @@ export function SleepTracker() {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Moon className="w-5 h-5 text-blue-600" />
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Sommeil</h2>
-        </div>
-        <div className="text-right">
-          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            {formatDuree(dureeHeures)}
-          </div>
+        <button onClick={handlePrevDay} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <div className="text-center">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+            {new Date(currentDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </h2>
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            {new Date(today).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+            {isToday ? "Aujourd'hui" : ""}
           </div>
         </div>
+        <button onClick={handleNextDay} disabled={isToday} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50">
+          <ChevronRight className="w-5 h-5" />
+        </button>
       </div>
 
       <div className="space-y-3">
@@ -159,7 +174,8 @@ export function SleepTracker() {
               type="time"
               value={heureCoucher}
               onChange={(e) => setHeureCoucher(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              disabled={!isToday}
+              className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             />
           </div>
           <div>
@@ -170,7 +186,8 @@ export function SleepTracker() {
               type="time"
               value={heureReveil}
               onChange={(e) => setHeureReveil(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              disabled={!isToday}
+              className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             />
           </div>
         </div>
@@ -185,11 +202,12 @@ export function SleepTracker() {
                 key={note}
                 type="button"
                 onClick={() => setQualiteRessentie(note)}
+                disabled={!isToday}
                 className={`transition-all duration-200 ${
                   qualiteRessentie >= note
                     ? 'text-yellow-400 scale-110'
                     : 'text-gray-300 dark:text-gray-600 hover:text-yellow-300'
-                }`}
+                } disabled:opacity-50`}
               >
                 <Star
                   className="w-7 h-7"
@@ -212,27 +230,29 @@ export function SleepTracker() {
           </div>
         )}
 
-        <button
-          onClick={handleSave}
-          disabled={isSaving}
-          className={`w-full text-white py-2 px-3 rounded-lg transition-colors shadow text-sm font-medium flex items-center justify-center ${
-            todayEntry
-              ? 'bg-green-600 hover:bg-green-700 disabled:opacity-50'
-              : 'bg-blue-600 hover:bg-blue-700 disabled:opacity-50'
-          }`}
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin mr-1" />
-              ...
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4 mr-1" />
-              {todayEntry ? 'Modifier' : 'Enregistrer'}
-            </>
-          )}
-        </button>
+        {isToday && (
+          <button
+            onClick={handleSave}
+            disabled={isSaving || !isToday}
+            className={`w-full text-white py-2 px-3 rounded-lg transition-colors shadow text-sm font-medium flex items-center justify-center ${
+              entry
+                ? 'bg-green-600 hover:bg-green-700 disabled:opacity-50'
+                : 'bg-blue-600 hover:bg-blue-700 disabled:opacity-50'
+            }`}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                ...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-1" />
+                {entry ? 'Modifier' : 'Enregistrer'}
+              </>
+            )}
+          </button>
+        )}
 
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded p-2">
           <p className="text-xs text-blue-700 dark:text-blue-300">
