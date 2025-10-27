@@ -1,0 +1,91 @@
+{
+  "hash": "8559e97e",
+  "configHash": "8546a0ab",
+  "lockfileHash": "2aa265d1",
+  "browserHash": "ab7ff043",
+  "optimized": {
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "4e75d08b",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "ba1a1d41",
+      "needsInterop": true
+    },
+    "lucide-react": {
+      "src": "../../node_modules/lucide-react/dist/esm/lucide-react.js",
+      "file": "lucide-react.js",
+      "fileHash": "1f63acfb",
+      "needsInterop": false
+    },
+    "date-fns": {
+      "src": "../../node_modules/date-fns/index.js",
+      "file": "date-fns.js",
+      "fileHash": "f91460c8",
+      "needsInterop": false
+    },
+    "date-fns/locale": {
+      "src": "../../node_modules/date-fns/locale.js",
+      "file": "date-fns_locale.js",
+      "fileHash": "631b665a",
+      "needsInterop": false
+    },
+    "recharts": {
+      "src": "../../node_modules/recharts/es6/index.js",
+      "file": "recharts.js",
+      "fileHash": "e1121596",
+      "needsInterop": false
+    },
+    "@supabase/supabase-js": {
+      "src": "../../node_modules/@supabase/supabase-js/dist/module/index.js",
+      "file": "@supabase_supabase-js.js",
+      "fileHash": "13367dbc",
+      "needsInterop": false
+    },
+    "immer": {
+      "src": "../../node_modules/immer/dist/immer.mjs",
+      "file": "immer.js",
+      "fileHash": "c226221b",
+      "needsInterop": false
+    },
+    "fuse.js": {
+      "src": "../../node_modules/fuse.js/dist/fuse.mjs",
+      "file": "fuse__js.js",
+      "fileHash": "1ebe6d90",
+      "needsInterop": false
+    },
+    "html5-qrcode": {
+      "src": "../../node_modules/html5-qrcode/esm/index.js",
+      "file": "html5-qrcode.js",
+      "fileHash": "92136b6b",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "browser-J6IYAAS7": {
+      "file": "browser-J6IYAAS7.js"
+    },
+    "chunk-PDLI7ESZ": {
+      "file": "chunk-PDLI7ESZ.js"
+    },
+    "chunk-UHINIFCJ": {
+      "file": "chunk-UHINIFCJ.js"
+    },
+    "chunk-W4EHDCLL": {
+      "file": "chunk-W4EHDCLL.js"
+    },
+    "chunk-7W32CK3N": {
+      "file": "chunk-7W32CK3N.js"
+    },
+    "chunk-G5WDZMIO": {
+      "file": "chunk-G5WDZMIO.js"
+    },
+    "chunk-EWTE5DHJ": {
+      "file": "chunk-EWTE5DHJ.js"
+    }
+  }
+}
