@@ -16,7 +16,6 @@ interface ProfileData {
   taille_cm: number | null;
   taille_derniere_modif: string | null;
   avatar_url: string | null;
-  photo_url: string | null;
   sexe: 'homme' | 'femme' | null;
   sport: string | null;
   discipline: string | null;
@@ -56,7 +55,7 @@ export function ProfilePage() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, full_name, date_de_naissance, taille_cm, taille_derniere_modif, photo_url, avatar_url, sexe, sport, discipline, favorite_disciplines')
+        .select('id, first_name, last_name, full_name, date_de_naissance, taille_cm, taille_derniere_modif, avatar_url, sexe, sport, discipline, favorite_disciplines')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -88,7 +87,7 @@ export function ProfilePage() {
         setProfile({
           ...createdProfile,
           email: user.email || '',
-          avatar_url: createdProfile.avatar_url || createdProfile.photo_url || null
+          avatar_url: createdProfile.avatar_url || null
         });
       } else {
         console.log('Profil trouvé:', data);
@@ -98,7 +97,7 @@ export function ProfilePage() {
           last_name: data.last_name || user.user_metadata?.last_name || '',
           full_name: data.full_name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || '',
           email: user.email || '',
-          avatar_url: data.avatar_url || data.photo_url || null
+          avatar_url: data.avatar_url || null
         });
       }
     } catch (error: any) {
