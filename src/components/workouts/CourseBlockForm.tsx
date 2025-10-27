@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2 } from 'lucide-react';
 import { produce } from 'immer';
+import { NumberSelector } from '../NumberSelector';
+import { DistanceInput } from './DistanceInput';
+import { RestTimeSelector } from '../RestTimeSelector';
+import { ChronoInput } from './ChronoInput';
 
 export interface CourseBlockData {
   id: string;
@@ -57,9 +61,9 @@ export const CourseBlockForm: React.FC<CourseBlockFormProps> = ({ block, onChang
     });
   }, [series, reps]);
 
-  const handleChronoChange = (serieIndex: number, repIndex: number, value: string) => {
+  const handleChronoChange = (serieIndex: number, repIndex: number, value: number | null) => {
     const newChronos = produce(chronos, draft => {
-      draft[serieIndex][repIndex] = value ? parseFloat(value) : null;
+      draft[serieIndex][repIndex] = value;
     });
     setChronos(newChronos);
   };
@@ -74,73 +78,51 @@ export const CourseBlockForm: React.FC<CourseBlockFormProps> = ({ block, onChang
 
       <div className="space-y-4">
         {/* Block Structure Inputs */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Séries</label>
-            <input
-              type="number"
-              value={series}
-              onChange={(e) => setSeries(Math.max(1, parseInt(e.target.value) || 1))}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Répétitions</label>
-            <input
-              type="number"
-              value={reps}
-              onChange={(e) => setReps(Math.max(1, parseInt(e.target.value) || 1))}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Distance (m)</label>
-            <input
-              type="number"
-              value={distance}
-              onChange={(e) => setDistance(parseInt(e.target.value) || 0)}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Repos / Rép</label>
-            <input
-              type="text"
-              placeholder="ex: 2m30s"
-              value={restBetweenReps}
-              onChange={(e) => setRestBetweenReps(e.target.value)}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Repos / Série</label>
-            <input
-              type="text"
-              placeholder="ex: 8m"
-              value={restBetweenSeries}
-              onChange={(e) => setRestBetweenSeries(e.target.value)}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900"
-            />
-          </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <NumberSelector
+            label="Séries"
+            value={series}
+            onChange={(val) => setSeries(val)}
+            min={1}
+            max={20}
+          />
+          <NumberSelector
+            label="Répétitions"
+            value={reps}
+            onChange={(val) => setReps(val)}
+            min={1}
+            max={50}
+          />
+          <DistanceInput
+            label="Distance (m)"
+            value={distance}
+            onChange={(val) => setDistance(val)}
+          />
+          <RestTimeSelector
+            label="Repos / Rép"
+            value={parseInt(restBetweenReps, 10) || undefined}
+            onChange={(val) => setRestBetweenReps(val ? val.toString() : '')}
+          />
+          <RestTimeSelector
+            label="Repos / Série"
+            value={parseInt(restBetweenSeries, 10) || undefined}
+            onChange={(val) => setRestBetweenSeries(val ? val.toString() : '')}
+          />
         </div>
 
         {/* Chrono Inputs */}
         <div className="space-y-3 pt-2">
-          <h4 className="font-medium text-sm text-gray-800 dark:text-gray-200">Saisie des chronomètres (en secondes)</h4>
+          <h4 className="font-medium text-sm text-gray-800 dark:text-gray-200">Saisie des chronomètres</h4>
           {chronos.map((serie, serieIndex) => (
             <div key={serieIndex} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
               <p className="mb-2 font-semibold text-xs text-gray-700 dark:text-gray-300">Série {serieIndex + 1}</p>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
                 {serie.map((chrono, repIndex) => (
                   <div key={repIndex}>
-                     <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1 text-center">Rép {repIndex + 1}</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      placeholder="--"
-                      value={chrono ?? ''}
-                      onChange={(e) => handleChronoChange(serieIndex, repIndex, e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm text-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900"
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1 text-center">Rép {repIndex + 1}</label>
+                    <ChronoInput
+                      value={chrono}
+                      onChange={(val) => handleChronoChange(serieIndex, repIndex, val)}
                     />
                   </div>
                 ))}
