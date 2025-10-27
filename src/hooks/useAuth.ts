@@ -8,6 +8,7 @@ type UserProfile = {
   first_name?: string;
   last_name?: string;
   email?: string;
+  avatar_url?: string;
 };
 
 export function useAuth() {
@@ -33,7 +34,8 @@ export function useAuth() {
                   session.user.user_metadata?.role || 'athlete',
             first_name: session.user.user_metadata?.first_name || '',
             last_name: session.user.user_metadata?.last_name || '',
-            email: session.user.email || ''
+            email: session.user.email || '',
+            avatar_url: session.user.user_metadata?.avatar_url || ''
           };
           
           setProfile(immediateProfile);
@@ -73,7 +75,8 @@ export function useAuth() {
                 session.user.user_metadata?.role || 'athlete',
           first_name: session.user.user_metadata?.first_name || '',
           last_name: session.user.user_metadata?.last_name || '',
-          email: session.user.email || ''
+          email: session.user.email || '',
+          avatar_url: session.user.user_metadata?.avatar_url || ''
         };
         
         setProfile(immediateProfile);
@@ -91,7 +94,8 @@ export function useAuth() {
                 session.user.user_metadata?.role || 'athlete',
           first_name: session.user.user_metadata?.first_name || '',
           last_name: session.user.user_metadata?.last_name || '',
-          email: session.user.email || ''
+          email: session.user.email || '',
+          avatar_url: session.user.user_metadata?.avatar_url || ''
         };
         
         setUser(session.user);
