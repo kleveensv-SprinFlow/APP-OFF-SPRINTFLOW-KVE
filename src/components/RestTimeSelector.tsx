@@ -66,9 +66,9 @@ export const RestTimeSelector: React.FC<RestTimeSelectorProps> = ({
             onChange={(e) => handleSecondsChange(parseInt(e.target.value))}
             className="w-full px-2 py-1 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded text-gray-900 dark:text-white text-xs"
           >
-            {Array.from({ length: 12 }, (_, i) => (
-              <option key={i * 5} value={i * 5}>
-                {(i * 5).toString().padStart(2, '0')}s
+            {[0, 15, 30, 45].map((s) => (
+              <option key={s} value={s}>
+                {s.toString().padStart(2, '0')}s
               </option>
             ))}
           </select>

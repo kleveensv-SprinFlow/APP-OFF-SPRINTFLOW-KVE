@@ -4,6 +4,7 @@ import { Workout, WorkoutMuscu } from '../../types';
 import useAuth from '../../hooks/useAuth';
 import { useExercices } from '../../hooks/useExercices';
 import { CourseBlockForm, CourseBlockData } from './CourseBlockForm';
+import { NumberSelector } from '../NumberSelector';
 
 interface NewWorkoutFormProps {
   editingWorkout?: Workout | null;
@@ -263,38 +264,34 @@ export function NewWorkoutForm({ editingWorkout, onSave, onCancel }: NewWorkoutF
                         </div>
 
                         <div className="grid grid-cols-3 gap-2">
-                            <div>
-                            <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Séries *</label>
-                            <input
-                                type="number"
-                                value={ex.series || ''}
-                                onChange={(e) => updateMuscu(index, 'series', parseInt(e.target.value))}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded"
-                                required
+                            <NumberSelector
+                                label="Séries *"
+                                value={ex.series}
+                                onChange={(val) => updateMuscu(index, 'series', val)}
+                                min={0}
+                                max={20}
                             />
-                            </div>
-
-                            <div>
-                            <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Reps *</label>
-                            <input
-                                type="number"
-                                value={ex.reps || ''}
-                                onChange={(e) => updateMuscu(index, 'reps', parseInt(e.target.value))}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded"
-                                required
+                            <NumberSelector
+                                label="Reps *"
+                                value={ex.reps}
+                                onChange={(val) => updateMuscu(index, 'reps', val)}
+                                min={0}
+                                max={50}
                             />
-                            </div>
-
                             <div>
-                            <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Poids (kg) *</label>
-                            <input
-                                type="number"
-                                step="0.5"
-                                value={ex.poids || ''}
-                                onChange={(e) => updateMuscu(index, 'poids', parseFloat(e.target.value))}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded"
-                                required
-                            />
+                                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Poids (kg) *</label>
+                                <input
+                                    type="number"
+                                    step="0.5"
+                                    value={ex.poids || ''}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        updateMuscu(index, 'poids', value === '' ? '' : parseFloat(value));
+                                    }}
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded"
+                                    placeholder="120kg"
+                                    required
+                                />
                             </div>
                         </div>
                         </div>
