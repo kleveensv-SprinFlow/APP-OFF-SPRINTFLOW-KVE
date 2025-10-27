@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Save, Copy, Calendar, Clock, Target } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { WorkoutBuilder, WorkoutBlock } from '../workouts/WorkoutBuilder';
 
 interface SessionTemplate {
   id: string;
@@ -40,17 +41,20 @@ export const SessionTemplateForm: React.FC<SessionTemplateFormProps> = ({
   
   const [sessionForm, setSessionForm] = useState({
     name: editingSession?.name || '',
-    description: editingSession?.description || '',
     session_type: (editingSession?.session_type || 'training') as 'training' | 'recovery' | 'rest',
     duration_minutes: editingSession?.duration_minutes || 60,
     intensity: (editingSession?.intensity || 'medium') as 'low' | 'medium' | 'high'
   });
+  const [workoutBlocks, setWorkoutBlocks] = useState<WorkoutBlock[]>(editingSession?.exercises || []);
 
   const [showPreviousSessions, setShowPreviousSessions] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!sessionForm.name.trim() || !sessionForm.description.trim()) return;
+    if (!sessionForm.name.trim() || workoutBlocks.length === 0) {
+        alert('Le nom de la séance et au moins un bloc d\'exercice sont requis.');
+        return;
+    }
     if (!selectedGroupId) {
       alert('Aucun groupe sélectionné');
       return;
@@ -59,7 +63,8 @@ export const SessionTemplateForm: React.FC<SessionTemplateFormProps> = ({
     const sessionWithDate = {
       ...sessionForm,
       group_id: selectedGroupId,
-      exercises: [], // Pas d'exercices pour simplifier
+      exercises: workoutBlocks,
+      description: `${workoutBlocks.length} bloc(s) d'entraînement.`, // Auto-generated description
       created_at: selectedSessionDate
     };
     
@@ -69,11 +74,11 @@ export const SessionTemplateForm: React.FC<SessionTemplateFormProps> = ({
   const handleCopySession = (template: SessionTemplate) => {
     setSessionForm({
       name: template.name,
-      description: template.description,
       session_type: template.session_type,
       duration_minutes: template.duration_minutes,
       intensity: template.intensity
     });
+    setWorkoutBlocks(template.exercises || []);
     setShowPreviousSessions(false);
   };
 
@@ -258,36 +263,21 @@ export const SessionTemplateForm: React.FC<SessionTemplateFormProps> = ({
             </div>
           </div>
 
-          {/* Description principale */}
+          {/* Workout Builder */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Description de la séance *
+              Contenu de la séance *
             </label>
-            <textarea
-              value={sessionForm.description}
-              onChange={(e) => setSessionForm(prev => ({ ...prev, description: e.target.value }))}
-              rows={6}
-              className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
-              placeholder="Décrivez le contenu de la séance :
-
-Exemple :
-• Échauffement : 15min (footing + gammes)
-• Sprint : 6 x 60m (récup 3min)
-• Force : Squat 4x6 à 80% + Power Clean 5x3
-• Retour au calme : 10min étirements
-
-Objectifs : Améliorer la vitesse maximale et la force explosive"
-              required
-            />
+            <WorkoutBuilder blocks={workoutBlocks} onChange={setWorkoutBlocks} />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              💡 Décrivez précisément les exercices, séries, répétitions et objectifs
+              💡 Construisez la séance en ajoutant des blocs de course ou de musculation.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-6">
             <button
               type="submit"
-              disabled={!sessionForm.name.trim() || !sessionForm.description.trim()}
+              disabled={!sessionForm.name.trim() || workoutBlocks.length === 0}
               className="w-full sm:flex-1 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 px-4 py-3 rounded-lg text-white font-medium transition-all duration-200 flex items-center justify-center space-x-2 button-3d"
             >
               <Save className="h-5 w-5" />
