@@ -1,7 +1,6 @@
 import React from 'react';
 import { ChevronLeft, Home, RefreshCw, Crown, User as UserIcon, Handshake } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
-import { useProfile } from '../../hooks/useProfile';
 
 interface HeaderProps {
   userRole?: 'athlete' | 'coach' | 'developer';
@@ -16,7 +15,7 @@ interface HeaderProps {
 }
 
 export default function Header({ userRole, onRefreshData, onProfileClick, onHomeClick, onPartnershipsClick, isDashboard, canGoBack, onBack, title }: HeaderProps) {
-  const { profile } = useProfile();
+  const { profile } = useAuth();
 
   const handleRefresh = () => {
     if (onRefreshData) {
@@ -55,9 +54,9 @@ export default function Header({ userRole, onRefreshData, onProfileClick, onHome
                 className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900 dark:to-secondary-900 flex items-center justify-center flex-shrink-0 border-2 border-primary-200 dark:border-primary-700 hover:border-primary-400 dark:hover:border-primary-500 transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95"
                 title="Mon Profil"
               >
-                {profile?.photo_url ? (
+                {profile?.avatar_url ? (
                   <img
-                    src={profile.photo_url}
+                    src={profile.avatar_url}
                     alt="Photo de profil"
                     className="w-full h-full object-cover"
                     onError={(e) => { e.currentTarget.style.display = 'none' }}
