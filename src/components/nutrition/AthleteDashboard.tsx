@@ -392,38 +392,6 @@ export function AthleteDashboard() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-          <div className="flex items-center gap-3">
-            <Weight className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Pesée du jour</h2>
-          </div>
-          {!todayWeight && (
-            <button
-              onClick={() => setShowWeightModal(true)}
-              className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Ajouter ma pesée
-            </button>
-          )}
-        </div>
-
-        {todayWeight ? (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <p className="text-lg font-semibold text-green-900">
-              Poids: {todayWeight.poids_kg} kg
-            </p>
-            {todayWeight.masse_grasse_pct && (
-              <p className="text-sm text-green-700">
-                Masse grasse: {todayWeight.masse_grasse_pct}%
-              </p>
-            )}
-          </div>
-        ) : (
-          <p className="text-gray-500">Aucune pesée enregistrée aujourd'hui</p>
-        )}
-      </div>
-
       {showWeightModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-4 sm:p-6 w-full max-w-md">
