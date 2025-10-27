@@ -104,7 +104,6 @@ export function useGroups() {
         if (groupsData && groupsData.length > 0) {
           loadMembersForGroups(groupsData)
         }
-        await loadMembersForGroups(groupsData)
       }
     } catch (error) {
       console.warn('Erreur réseau groupes coach (ignorée):', error)
@@ -270,7 +269,6 @@ export function useGroups() {
       
       const { data, error } = await supabase
         .from('groups')
-        .from('groups')
         .insert({
           name: groupData.name.trim(),
           description: groupData.description?.trim() || null,
@@ -279,7 +277,6 @@ export function useGroups() {
           max_members: 50
         })
         .select()
-        .single()
         .single()
       
       if (error) {
