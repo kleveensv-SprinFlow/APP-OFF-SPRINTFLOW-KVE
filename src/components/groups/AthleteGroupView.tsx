@@ -304,9 +304,9 @@ export const AthleteGroupView: React.FC = () => {
                   <div className="bg-secondary-50 dark:bg-secondary-900/20 rounded-lg p-3 border border-secondary-200 dark:border-secondary-800">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-secondary-100 dark:bg-secondary-900 rounded-full flex items-center justify-center overflow-hidden">
-                        {selectedGroupForMembers.coach.photo_url ? (
+                        {selectedGroupForMembers.coach.avatar_url ? (
                           <img 
-                            src={selectedGroupForMembers.coach.photo_url} 
+                            src={selectedGroupForMembers.coach.avatar_url} 
                             alt={`${selectedGroupForMembers.coach.first_name} ${selectedGroupForMembers.coach.last_name}`}
                             className="w-full h-full object-cover"
                           />
@@ -343,9 +343,9 @@ export const AthleteGroupView: React.FC = () => {
                     <div key={member.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center overflow-hidden">
-                          {member.athlete?.photo_url ? (
+                          {member.athlete?.avatar_url ? (
                             <img 
-                              src={member.athlete?.photo_url} 
+                              src={member.athlete?.avatar_url} 
                               alt={`${member.athlete?.first_name} ${member.athlete?.last_name}`}
                               className="w-full h-full object-cover"
                             />
