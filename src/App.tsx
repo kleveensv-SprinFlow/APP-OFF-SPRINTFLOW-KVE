@@ -29,6 +29,7 @@ import { PartnershipsList } from './components/PartnershipsList';
 import { DeveloperPanel } from './components/developer/DeveloperPanel';
 import { NotificationDisplay } from './components/NotificationDisplay';
 import { NutritionModule } from './components/nutrition/NutritionModule';
+import { SleepForm } from './components/sleep/SleepForm';
 import { getViewTitle } from './utils/navigation';
 
 function App() {
@@ -161,6 +162,18 @@ function App() {
     }
   };
 
+  const handleSleepSave = async () => {
+    try {
+      navigateBack();
+      // Optionally refresh data if sleep affects scores
+      if (refreshScores) {
+        await refreshScores();
+      }
+    } catch (error) {
+      console.error('Error saving sleep:', error);
+    }
+  };
+
   // Fonction pour forcer le rechargement des données depuis Supabase
   const refreshData = () => {
     if (user) {
@@ -284,8 +297,16 @@ function App() {
           <NutritionModule />
         )}
 
+        {/* Sleep */}
+        {currentView === 'add-sleep' && (
+          <SleepForm 
+            onSave={handleSleepSave}
+            onCancel={navigateBack}
+          />
+        )}
+
         {/* Developer Panel */}
-        {currentView === 'developer' && user && user.id === '75a1759-b45b-4dd1-883b-ce8ccfe03f0f' && (
+        {currentView === 'developer' && user && user.id === '75a17559-b45b-4dd1-883b-ce8ccfe03f0f' && (
           <DeveloperPanel />
         )}
       </main>
