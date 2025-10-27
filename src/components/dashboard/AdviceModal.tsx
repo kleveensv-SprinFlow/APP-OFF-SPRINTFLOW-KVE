@@ -6,7 +6,7 @@ const getThemeConfig = (color: string) => {
     case 'text-green-500':
       return { bg: 'bg-green-100 dark:bg-green-900/30', icon: HeartPulse, title: "Analyse de votre Forme" };
     case 'text-blue-500':
-      return { bg: 'bg-blue-100 dark:bg-blue-900/30', icon: Zap, title: "Analyse de votre Performance" };
+      return { bg: 'bg-blue-100 dark:bg-blue-900/30', icon: Zap, title: "Analyse de votre Poids/Puissance" };
     case 'text-purple-500':
       return { bg: 'bg-purple-100 dark:bg-purple-900/30', icon: TrendingUp, title: "Analyse de votre Évolution" };
     default:
@@ -16,36 +16,25 @@ const getThemeConfig = (color: string) => {
 
 const ADVICE_GENERATORS = {
   forme: (data: any) => [
-      `Votre score de Forme de ${data.indice}/100 est basé sur votre récupération et votre charge d'entraînement.`,
-      data.context.cause === 'SOMMEIL' && "Le principal facteur limitant est un manque de sommeil. Priorisez 7-9h par nuit.",
-      data.context.cause === 'CHARGE' && "Vous semblez en surcharge. Un jour de repos supplémentaire pourrait être bénéfique.",
-      data.indice > 80 && "Excellente forme ! C'est le moment idéal pour une séance intense ou pour tenter un nouveau record."
+      `Basé sur vos 3 derniers jours d'entraînement (chronos) et la qualité de votre sommeil. Ce score vous indique si vous êtes en état de surcompensation, de fatigue ou de forme optimale.`
     ].filter(Boolean),
-  performance: (data: any) => [
-      `Votre score de Performance de ${data.indice}/100 reflète votre potentiel athlétique brut.`,
-      `Il est composé à 40% de votre score de composition (${data.scoreCompo}/100) et à 60% de votre score de force (${data.scoreForce}/100).`,
-      data.scoreCompo < 60 && `Votre point faible semble être la composition corporelle (calculé via ${data.context.compoMethod}). Se concentrer sur la nutrition pourrait débloquer votre potentiel.`,
-      data.scoreForce < 60 && "Votre force relative est un axe de progression. Continuez le travail de renforcement !",
-      data.indice > 80 && `Félicitations ! Votre profil de force est excellent et bien adapté à votre discipline : ${data.context.discipline}.`
+  poidsPuissance: (data: any) => [
+      `Calculé à partir de votre poids, masse grasse (si disponible) et vos records en musculation. Il estime votre capacité à générer de la force par rapport à votre poids.`
     ].filter(Boolean),
   evolution: (data: any) => [
-      `Votre score d'Évolution de ${data.indice}/100 indique que vous êtes à ${data.indice}% de votre meilleur niveau des 90 derniers jours.`,
-      data.indice > 100 && `Vous êtes en pleine progression ! Vos records récents dépassent vos anciens meilleures performances.`,
-      data.indice < 95 && `Vous semblez être dans une phase de récupération ou de désentraînement. Analysez votre fatigue et votre charge.`,
-      ...(data.context.topProgress?.map((p: any) => `Point fort : forte progression sur ${p.name} (+${p.score - 100}%).`) || []),
-      ...(data.context.bottomProgress?.map((p: any) => `Axe d'amélioration : ${p.name} est en retrait (${p.score}% du pic).`) || [])
+      `Un score personnalisé qui mesure votre progression dans votre discipline de prédilection (ex: sprint). Il analyse l'évolution de vos chronos et de vos charges en musculation au fil du temps.`
     ].filter(Boolean)
 };
 
 const COLOR_MAP = {
     forme: 'text-green-500',
-    performance: 'text-blue-500',
+    poidsPuissance: 'text-blue-500',
     evolution: 'text-purple-500'
 }
 
 interface AdviceModalProps {
   content: {
-    type: 'forme' | 'performance' | 'evolution';
+    type: 'forme' | 'poidsPuissance' | 'evolution';
     data: any;
   };
   onClose: () => void;
